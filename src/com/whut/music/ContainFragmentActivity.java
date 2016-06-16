@@ -3,7 +3,6 @@ package com.whut.music;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -28,6 +27,10 @@ public class ContainFragmentActivity extends FragmentActivity implements
 	private OnlineMusicFragment onlineFM;
 	private LocalMusicFragment localFM;
 	private MyFragmentAdapter myFragmentAdapter;
+	
+	// 底部导航条
+	private View tab_online;
+	private View tab_local;
 	
 
 	@Override
@@ -72,6 +75,8 @@ public class ContainFragmentActivity extends FragmentActivity implements
 		viewPager.setCurrentItem(0);
 		
 		
+		tab_online = (View) findViewById(R.id.tab_selected_0);
+		tab_local  = (View) findViewById(R.id.tab_selected_1);
 
 	}
 
@@ -115,7 +120,19 @@ public class ContainFragmentActivity extends FragmentActivity implements
 
 	@Override
 	public void onPageSelected(int arg0) {
-
+		switch (arg0) {
+		case 0:
+			tab_online.setVisibility(View.VISIBLE);
+			tab_local.setVisibility(View.GONE);
+			break;
+		case 1:
+			tab_online.setVisibility(View.GONE);
+			tab_local.setVisibility(View.VISIBLE);
+			break;
+			
+		default:
+			break;
+		}
 	}
 
 }
