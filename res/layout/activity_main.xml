@@ -6,7 +6,7 @@
     android:orientation="vertical"
     tools:context="com.whut.music.MainActivity" >
        
-    <include layout="@layout/common_topbar_main_aty"/>
+    <include layout="@layout/topbar_main_aty"/>
 
     <com.whut.view.LrcView
         android:id="@+id/lrcShowView"

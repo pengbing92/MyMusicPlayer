@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bottomView"
+    android:layout_width="fill_parent"
+    android:layout_height="50dp"
+    android:layout_gravity="center_vertical"
+    android:clickable="true"
+    android:gravity="center_vertical" >
+
+    <ImageView
+        android:id="@+id/songImg"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:contentDescription="@string/image" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        android:layout_marginLeft="5dp"
+        android:layout_toRightOf="@+id/songImg"
+        android:gravity="center_vertical"
+        android:orientation="vertical" >
+
+        <TextView
+            android:id="@+id/songName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/singer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/play_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_marginRight="10dp"
+        android:layout_toLeftOf="@+id/next_btn"
+        android:background="@drawable/playbtn_selector"
+        android:scaleType="fitXY"
+        android:contentDescription="@string/image" />
+
+    <ImageView
+        android:id="@+id/next_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerInParent="true"
+        android:layout_gravity="center"
+        android:layout_marginRight="15dp"
+        android:background="@drawable/nextbtn_selector"
+        android:scaleType="fitXY"
+        android:contentDescription="@string/image" />
+
+</RelativeLayout>

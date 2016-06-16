@@ -8,5 +8,11 @@
     <string name="title_activity_song_list">SongListActivity</string>
     <string name="image">图片</string>
     <string name="line">分割线</string>
-
+    <string name="title_activity_contain_fragment">ContainFragmentActivity</string>
+    <string name="firstFragment">展示乐库的Fragment</string>
+    <string name="secondFragment">展示本地音乐的Fragment</string>
+    <string name="online">乐库</string>
+    <string name="local">我的音乐</string>
+    <string name="local_music">本地音乐</string>
+    
 </resources>

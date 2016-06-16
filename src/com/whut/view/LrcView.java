@@ -77,7 +77,7 @@ public class LrcView extends android.widget.TextView {
 		// currentPaint.setColor(Color.argb(210, 251, 248, 29));
 		notCurrentPaint.setColor(Color.argb(140, 255, 255, 255));
 
-		currentPaint.setTextSize(60);
+		currentPaint.setTextSize(50);
 		currentPaint.setTypeface(Typeface.SERIF);
 
 		notCurrentPaint.setTextSize(textSize);

@@ -51,6 +51,9 @@ public class SongListActivity extends Activity implements OnClickListener,
 	private TextView singer;
 	private ImageView playBtn;
 	private ImageView nextBtn;
+	
+	// 后退按钮
+	private ImageView back_Btn;
 
 	private Context context;
 
@@ -313,6 +316,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 		singer = (TextView) findViewById(R.id.singer);
 		playBtn = (ImageView) findViewById(R.id.play_btn);
 		nextBtn = (ImageView) findViewById(R.id.next_btn);
+		back_Btn = (ImageView) findViewById(R.id.back);
 //		song_progressBar = (ProgressBar) findViewById(R.id.song_progress);
 //		song_progressBar.setMax(duration);
 
@@ -337,6 +341,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 		bottomLayout.setOnClickListener(this);
 		playBtn.setOnClickListener(this);
 		nextBtn.setOnClickListener(this);
+		back_Btn.setOnClickListener(this);
 
 		// 歌曲缩略图旋转动画效果
 		objectAnimatorPre = ObjectAnimator.ofFloat(songImage, "rotation", 0f,
@@ -360,7 +365,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 			}
 		});
 
-		// 开启动画效果
+		// 歌曲图片，旋转动画效果
 		startImageAnimation();
 
 	}
@@ -390,6 +395,10 @@ public class SongListActivity extends Activity implements OnClickListener,
 			playNextSong();
 			// 切换歌曲的时候，重新设置 NOT_FOUND 的初始值为false
 			LrcProcess.setNOT_FOUND(false);
+			break;
+		case R.id.back:
+			// 结束当前Aty，返回上一个Aty
+			finish();
 			break;
 		}
 	}
