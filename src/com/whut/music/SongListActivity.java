@@ -2,6 +2,7 @@ package com.whut.music;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -13,8 +14,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -43,7 +42,7 @@ import com.whut.view.LrcProcess;
 public class SongListActivity extends Activity implements OnClickListener,
 		OnItemClickListener {
 
-	private ArrayList<Song> songList;
+	private List<Song> songList;
 	private ListView songListView;
 	private RelativeLayout bottomLayout;
 	private ImageView songImage;
@@ -57,20 +56,13 @@ public class SongListActivity extends Activity implements OnClickListener,
 
 	private Context context;
 
-	private static SharedPreferences preferences;
-	private static Editor editor;
-
-	public static Editor getEditor() {
-		return editor;
-	}
-
 	private String songName_str = ""; // 歌曲名
 	private String singer_str = ""; // 歌手名
 	private int secondPause = -1; // 播放中断位置，默认值为-1
 
 	private SongListAdapter songListAdapter;
 
-	// 播放标志
+	// 播放状态标志
 	private static boolean isPlaying;
 
 	// 广播接收器
@@ -99,14 +91,8 @@ public class SongListActivity extends Activity implements OnClickListener,
 	// 播放下一曲
 	private boolean playNext = false;
 
-	// 通知栏管理
-	private NotificationManager manager;
-
 	// 是否已启动Service
 	private static boolean isServiceOpen = false;
-
-	// 是否有通知栏
-	private boolean notification = false;
 
 	// 手机存储根目录
 	private String rootPath = Environment.getExternalStorageDirectory()
@@ -115,6 +101,10 @@ public class SongListActivity extends Activity implements OnClickListener,
 	// 歌曲缩略图旋转动画
 	private ObjectAnimator objectAnimatorPre; // 先从0旋转到180
 	private ObjectAnimator objectAnimatorNext; // 再从180旋转到360，周而复始
+
+	public static int getCurrentPosition() {
+		return currentPosition;
+	}
 
 	@SuppressLint("HandlerLeak")
 	private Handler handler = new Handler() {
@@ -134,8 +124,6 @@ public class SongListActivity extends Activity implements OnClickListener,
 				songListAdapter.setCurrentItem(currentIndex);
 				songListView.setSelection(currentIndex);
 				songListAdapter.notifyDataSetChanged();
-
-				MusicManager.setCurrentIndex(currentIndex);
 				break;
 			case 2:
 				// 播放模式
@@ -164,16 +152,6 @@ public class SongListActivity extends Activity implements OnClickListener,
 
 		// 创建歌词文件夹
 		createLrcFolder();
-
-		// 通知管理
-		manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		// 去掉通知
-		manager.cancelAll();
-
-		// 发送广播，通知service，已经清除系统通知栏
-		Intent intent = new Intent("notification");
-		intent.putExtra("notification", notification);
-		sendBroadcast(intent);
 
 		initBroadcastReceiver();
 
@@ -259,7 +237,6 @@ public class SongListActivity extends Activity implements OnClickListener,
 	}
 
 	// 初始化数据
-	@SuppressWarnings("deprecation")
 	public void initData() {
 
 		songList = new ArrayList<Song>();
@@ -277,31 +254,10 @@ public class SongListActivity extends Activity implements OnClickListener,
 
 		}
 
-		// 从SharedPreferences中获取数据
-		preferences = getSharedPreferences("songInfo", Context.MODE_PRIVATE);
-
-		editor = preferences.edit();
-
-		secondPause = preferences.getInt("secondPause", -1);
-		currentIndex = preferences.getInt("currentIndex", 0);
-		currentModel = preferences.getInt("currentModel", Play_Model.CYCLEALL);
-		songName_str = songList.get(currentIndex).getSongName();
-		singer_str = songList.get(currentIndex).getSinger();
-
 		isPlaying = MusicManager.isPlaying();
-		// currentIndex = MusicManager.getCurrentIndex();
+		currentIndex = MusicManager.getCurrentIndex();
 		currentModel = MusicManager.getCurrentModel();
 		isServiceOpen = MusicManager.isServiceOpen();
-
-		/**
-		 * 从通知栏进入MainAty，再返回到SongAty
-		 */
-		// if (MusicManager.isNotifMainToSong()) {
-		// isPlaying = MusicManager.isPlaying();
-		// currentIndex = MusicManager.getCurrentIndex();
-		// currentModel = MusicManager.getCurrentModel();
-		// isServiceOpen = MusicManager.isServiceOpen();
-		// }
 
 		songListAdapter = new SongListAdapter(songList, context);
 
@@ -384,8 +340,8 @@ public class SongListActivity extends Activity implements OnClickListener,
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.bottomView:
-			// 从SongAty跳转到MainAty
-			startActivity(gotoMainAty(context, isPlaying, currentIndex,
+			// 从SongAty跳转到LrcAty
+			startActivity(gotoLrcAty(context, isPlaying, currentIndex,
 					currentModel, false));
 			break;
 		case R.id.play_btn:
@@ -436,50 +392,21 @@ public class SongListActivity extends Activity implements OnClickListener,
 
 	@Override
 	protected void onDestroy() {
-
-		/**
-		 * 播放时退出，通知栏
-		 */
-		if (isPlaying) {
-			MusicManager.setPlaying(isPlaying);
-			MusicManager
-					.musicNotification(
-							1,
-							context,
-							getPackageName(),
-							gotoMainAty(context, true, currentIndex,
-									currentModel, true), true, currentIndex,
-							currentModel);
-
-			// 发送广播，通知service，已经构建系统通知栏
-			notification = true;
-			Intent intent = new Intent("notification");
-			intent.putExtra("notification", notification);
-			sendBroadcast(intent);
-		} else {
-
-			// 关闭MyMusicService
-			Intent intent = new Intent(context, MyMusicService.class);
-			stopService(intent);
-
-		}
-
-		// 保存退出时的歌曲信息
-		recordPause(currentPosition, currentIndex, currentModel);
 		// 注销广播接收器
 		unRegisterBroadcastRev();
+		Log.i("songList_Aty", "onDestory");
 		super.onDestroy();
 	}
 
 	/**
-	 * 进入MainAty的intent，包含相关信息
+	 * 进入LrcAty的intent，包含相关信息
 	 * 
 	 * @return intent
 	 */
-	public static Intent gotoMainAty(Context context, boolean isPlaying,
+	public static Intent gotoLrcAty(Context context, boolean isPlaying,
 			int currentIndex, int currentModel, boolean fromNotification) {
 
-		Intent intent = new Intent(context, MainActivity.class);
+		Intent intent = new Intent(context, LrcActivity.class);
 		intent.putExtra("isPlaying", isPlaying);
 		intent.putExtra("currentIndex", currentIndex);
 		intent.putExtra("currentModel", currentModel);
@@ -533,19 +460,6 @@ public class SongListActivity extends Activity implements OnClickListener,
 
 		startMusicService();
 
-	}
-
-	// 保存退出时的歌曲信息
-	public static void recordPause(int currentPosition, int currentIndex,
-			int currentModel) {
-		Log.i("MusicDemo", "sharedPreferences");
-		// editor = preferences.edit();
-		editor.putInt("secondPause", currentPosition);
-		editor.putInt("currentIndex", currentIndex);
-		editor.putInt("currentModel", currentModel);
-		editor.commit();
-
-		MusicManager.setPlaying(isPlaying);
 	}
 
 	// 播放结束后的处理

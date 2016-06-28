@@ -1,6 +1,7 @@
 package com.whut.application;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import android.app.Notification;
 import android.app.Notification.Builder;
@@ -9,10 +10,15 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.BitmapFactory.Options;
 import android.provider.MediaStore;
 import android.widget.RemoteViews;
 
 import com.whut.entiy.Song;
+import com.whut.fragment.LocalMusicFragment;
+import com.whut.music.MainActivity;
 import com.whut.music.R;
 import com.whut.music.SongListActivity;
 import com.whut.service.MyMusicService;
@@ -21,18 +27,19 @@ import com.whut.util.Play_Model;
 
 public class MusicManager {
 
-	private static ArrayList<Song> songList = new ArrayList<Song>();
-
-	private static boolean notifMainToSong = false; // 从通知栏进入MainAty再返回SongAty的标志
+	// 点击通知栏进入LrcAty，再返回SongAty的标志
+	private static boolean notifMainToSong = false; 
 
 	private static boolean isPlaying = false;
 	private static int currentIndex = 0;
 	private static int currentModel = Play_Model.CYCLEALL;
+	private static long id = 0;
 
 	private static int seekPosition = -1;
 
 	private static boolean isServiceOpen = true;
 
+	/******************** get and set ****************************************/
 	public static boolean isServiceOpen() {
 		return isServiceOpen;
 	}
@@ -81,10 +88,23 @@ public class MusicManager {
 		MusicManager.isPlaying = isPlaying;
 	}
 
-	// 从媒体库中获取本机上的MP3文件
-	public static ArrayList<Song> getSongsFromMediaDB(Context context) {
+	public static long getId() {
+		return id;
+	}
 
-		songList.clear();
+	public static void setId(long id) {
+		MusicManager.id = id;
+	}
+
+	/**
+	 * 从媒体库中获取本机上的MP3文件
+	 * 
+	 * @param context
+	 * @return 歌曲列表
+	 */
+	public static List<Song> getSongsFromMediaDB(Context context) {
+
+		List<Song> songList = new ArrayList<Song>();
 
 		Cursor cursor = context.getContentResolver().query(
 				MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null,
@@ -105,20 +125,28 @@ public class MusicManager {
 					.getColumnIndex(MediaStore.Audio.Media.ARTIST));
 			long size = cursor.getLong(cursor
 					.getColumnIndex(MediaStore.Audio.Media.SIZE));
+			String album = cursor.getString(cursor
+					.getColumnIndex(MediaStore.Audio.Media.ALBUM));
+			int albumId = cursor.getInt(cursor
+					.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
 
 			int isMusic = cursor.getInt(cursor
 					.getColumnIndex(MediaStore.Audio.Media.IS_MUSIC));
 
 			if (isMusic != 0 && size / 1000000 > 0) {
+
 				song.setId(id);
 				song.setDuration(duration);
 				song.setMp3Path(mp3Path);
 				song.setSongName(songName);
 				song.setSinger(singer);
 				song.setSize(size);
+				song.setAlbum(album);
+				song.setAlbumId(albumId);
+
 				songList.add(song);
 
-				// Log.i("song_list", mp3Path + ";" + songName + ";" + singer);
+				//Log.i("song_list", mp3Path + ";" + albumId);
 			}
 
 		}
@@ -132,16 +160,12 @@ public class MusicManager {
 	 * 显示通知栏
 	 * 
 	 * @param id
-	 *            通知的id
 	 * @param context
 	 * @param packageName
-	 *            包名
-	 * @param songName
-	 *            通知栏显示的歌曲名
-	 * @param singer
-	 *            通知栏显示的歌手名
-	 * @param intent
-	 *            点击通知栏跳转到Aty的intent
+	 * @param AtyIntent
+	 * @param isPlaying
+	 * @param currentIndex
+	 * @param currentModel
 	 */
 	@SuppressWarnings("null")
 	public static void musicNotification(int id, Context context,
@@ -218,15 +242,15 @@ public class MusicManager {
 		 */
 		Intent[] intents = new Intent[2];
 		// 创建activity栈的根activity
-		Intent gotoSongListAty = new Intent(context, SongListActivity.class);
-		gotoSongListAty.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		Intent gotoMainAty = new Intent(context, MainActivity.class);
+		gotoMainAty.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		if (MusicManager.isPlaying) {
 			isServiceOpen = true;
 		} else {
 			isServiceOpen = false;
 		}
 
-		intents[0] = gotoSongListAty;
+		intents[0] = gotoMainAty;
 		intents[1] = AtyIntent;
 
 		PendingIntent pendingIntent = PendingIntent.getActivities(context, 0,
@@ -252,10 +276,91 @@ public class MusicManager {
 		manager.notify(id, notification);
 
 		// 保存数据
-		SongListActivity.getEditor().putInt("currentIndex", currentIndex);
-		SongListActivity.getEditor().putInt("currentModel", currentModel);
-		SongListActivity.getEditor().commit();
+		LocalMusicFragment.getEditor().putInt("currentIndex", currentIndex);
+		LocalMusicFragment.getEditor().putInt("currentModel", currentModel);
+		LocalMusicFragment.getEditor().commit();
 
 	}
 
+	/**
+	 * 获取默认专辑图片
+	 * 
+	 * @param context
+	 * @return
+	 */
+	public static Bitmap getDefaultArtwork(Context context) {
+		BitmapFactory.Options opts = new BitmapFactory.Options();
+		opts.inPreferredConfig = Bitmap.Config.RGB_565;
+
+		return BitmapFactory.decodeResource(context.getResources(),
+				R.drawable.songlist_default, opts);
+	}
+
+	
+	/**
+	 * 获取专辑封面位图对象
+	 * 
+	 * @param albumPath
+	 * @return 位图对象
+	 */
+	public static Bitmap getArtwork(String albumPath) {
+		Bitmap bm = null;  
+		
+		BitmapFactory.Options options = new BitmapFactory.Options();
+		options.inPreferredConfig = Bitmap.Config.RGB_565;
+		//先制定原始大小
+		options.inSampleSize = 1;
+		//只进行大小判断
+		options.inJustDecodeBounds = true;
+		//调用此方法得到options得到图片的大小
+		BitmapFactory.decodeFile(albumPath, options);
+		/** 我们的目标是在你N pixel的画面上显示。 所以需要调用computeSampleSize得到图片缩放的比例 **/
+		/** 这里的target为800是根据默认专辑图片大小决定的，800只是测试数字但是试验后发现完美的结合 **/
+		options.inSampleSize = computeSampleSize(options, 60);
+//		if(small){
+//			options.inSampleSize = computeSampleSize(options, 40);
+//		} else{
+//			options.inSampleSize = computeSampleSize(options, 600);
+//		}
+		
+		// 我们得到了缩放比例，现在开始正式读入Bitmap数据
+		options.inJustDecodeBounds = false;
+		options.inDither = false;
+		options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+		
+		bm = BitmapFactory.decodeFile(albumPath, options);
+		
+		return bm;
+	}
+
+
+	/**
+	 * 对图片进行合适的缩放
+	 * 
+	 * @param options
+	 * @param target
+	 * @return
+	 */
+	public static int computeSampleSize(Options options, int target) {
+		int w = options.outWidth;
+		int h = options.outHeight;
+		int candidateW = w / target;
+		int candidateH = h / target;
+		int candidate = Math.max(candidateW, candidateH);
+		if (candidate == 0) {
+			return 1;
+		}
+		if (candidate > 1) {
+			if ((w > target) && (w / candidate) < target) {
+				candidate -= 1;
+			}
+		}
+		if (candidate > 1) {
+			if ((h > target) && (h / candidate) < target) {
+				candidate -= 1;
+			}
+		}
+		return candidate;
+	}
+	
 }

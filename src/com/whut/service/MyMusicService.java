@@ -3,6 +3,7 @@ package com.whut.service;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import android.app.Service;
@@ -47,7 +48,7 @@ public class MyMusicService extends Service {
 	private CurrentPositonReceiver cpRev;
 
 	// 歌曲列表
-	private ArrayList<Song> songList = new ArrayList<Song>();
+	private List<Song> songList = new ArrayList<Song>();
 
 	// 歌曲的list下标
 	private int currentIndex;
@@ -231,7 +232,7 @@ public class MyMusicService extends Service {
 		if (notifCreated) {
 			MusicManager.setPlaying(false);
 			// 通知
-			Intent intent = SongListActivity.gotoMainAty(MyMusicService.this,
+			Intent intent = SongListActivity.gotoLrcAty(MyMusicService.this,
 					false, currentIndex, currentModel, true);
 			MusicManager
 					.musicNotification(1, MyMusicService.this,
@@ -288,7 +289,7 @@ public class MyMusicService extends Service {
 		if (notifCreated) {
 			MusicManager.setPlaying(true);
 			// 通知
-			Intent intent = SongListActivity.gotoMainAty(MyMusicService.this,
+			Intent intent = SongListActivity.gotoLrcAty(MyMusicService.this,
 					true, currentIndex, currentModel, true);
 			MusicManager.musicNotification(1, MyMusicService.this,
 					getPackageName(), intent, true, currentIndex, currentModel);
@@ -331,6 +332,8 @@ public class MyMusicService extends Service {
 		intent.setAction("currentIndex");
 		intent.putExtra("currentIndex", currentIndex);
 		sendBroadcast(intent);
+		// 更新播放歌曲的列表下标
+		MusicManager.setCurrentIndex(currentIndex);
 	}
 
 	// 初始化播放器

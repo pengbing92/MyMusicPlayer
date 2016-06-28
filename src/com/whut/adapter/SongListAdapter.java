@@ -3,12 +3,16 @@ package com.whut.adapter;
 import java.util.List;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.whut.application.MusicManager;
 import com.whut.entiy.Song;
 import com.whut.music.R;
 
@@ -23,6 +27,8 @@ public class SongListAdapter extends BaseAdapter {
 	private List<Song> songList;
 	private LayoutInflater layoutInflater;
 	private Context context;
+	
+	private String albumPath = null; // 专辑封面图存储路径
 
 	// 正在播放的歌曲的id，用以突出显示
 	private long currentItem;
@@ -42,6 +48,7 @@ public class SongListAdapter extends BaseAdapter {
 	public static class ViewHolder {
 		TextView song_name;
 		TextView song_singer;
+		ImageView albumImage; // 专辑图片
 	}
 
 	@Override
@@ -70,6 +77,7 @@ public class SongListAdapter extends BaseAdapter {
 					.findViewById(R.id.song_name);
 			viewHolder.song_singer = (TextView) convertView
 					.findViewById(R.id.song_singer);
+			viewHolder.albumImage = (ImageView) convertView.findViewById(R.id.albumImage);
 			convertView.setTag(viewHolder);
 		} else {
 			viewHolder = (ViewHolder) convertView.getTag();
@@ -77,9 +85,21 @@ public class SongListAdapter extends BaseAdapter {
 
 		viewHolder.song_name.setText(song.getSongName());
 		viewHolder.song_singer.setText(song.getSinger());
+		
+		// 设置专辑封面图
+		albumPath = getAlbumImagePath(song.getMp3Path());
+		Bitmap bitmap = MusicManager.getArtwork(albumPath);
+		if (bitmap != null) {
+			viewHolder.albumImage.setImageBitmap(bitmap);
+		} else {
+			// 默认图片
+			Bitmap defaultAlbum = MusicManager.getDefaultArtwork(context);
+			viewHolder.albumImage.setImageBitmap(defaultAlbum);
+		}
+		
 
 		// 根据传入的下标，将相应的item的字体显示为红色
-		if (currentItem == song.getId()) {
+		if (currentItem == position) {
 			viewHolder.song_name.setTextColor(context.getResources().getColor(
 					R.color.red));
 		}else {
@@ -89,6 +109,25 @@ public class SongListAdapter extends BaseAdapter {
 		}
 
 		return convertView;
+	}
+
+	/**
+	 * 获取专辑封面图片存储路径
+	 * 
+	 * @param songPath
+	 * @return 专辑封面图存储路径
+	 */
+	public String getAlbumImagePath(String songPath) {
+		
+		Log.i("歌曲存储路径", songPath);
+		
+		albumPath = songPath.substring(0, songPath.lastIndexOf("/"));
+		albumPath = albumPath.replace("Download", "Cover")+".jpg";
+		
+		
+		Log.i("专辑封面图路径", albumPath);
+		
+		return albumPath;
 	}
 
 }
