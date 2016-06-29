@@ -323,6 +323,8 @@ public class MyMusicService extends Service {
 		intent.setAction("isplaying");
 		intent.putExtra("isplaying", isplaying);
 		sendBroadcast(intent);
+		// 更新歌曲播放状态
+		MusicManager.setPlaying(isplaying);
 	}
 
 	// 发送currentIndex广播

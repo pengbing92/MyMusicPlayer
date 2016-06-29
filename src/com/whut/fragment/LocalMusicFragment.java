@@ -99,7 +99,6 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 		/**
 		 * onCreate方法只执行一次
 		 */
-
 		context = getActivity();
 
 		// 通知栏管理
@@ -114,6 +113,7 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 		context.sendBroadcast(intent);
 
 		initData();
+		// 初始化广播接收器
 		initBroadcastReceiver();
 		Log.i("localFM", "onCreate");
 		super.onCreate(savedInstanceState);
@@ -154,9 +154,8 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.bottomView:
-			startActivity(SongListActivity.gotoLrcAty(context,
-					MusicManager.isPlaying(), currentIndex,
-					MusicManager.getCurrentModel(), false));
+			startActivity(SongListActivity.gotoLrcAty(context, isPlaying,
+					currentIndex, MusicManager.getCurrentModel(), false));
 			break;
 		case R.id.localFM_Content:
 			Intent gotoSongListAty = new Intent(context, SongListActivity.class);
@@ -194,6 +193,14 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 		currentModel = preferences.getInt("currentModel", Play_Model.CYCLEALL);
 		songName_str = songList.get(currentIndex).getSongName();
 		singer_str = songList.get(currentIndex).getSinger();
+		
+		MusicManager.setCurrentModel(currentModel);
+		
+		/**
+		 * 点击通知栏进入LrcAty，后退进入MainAty
+		 * 此时LocalFM的广播接收器才注册，接收不到播放状态广播
+		 */
+		isPlaying = MusicManager.isPlaying();
 
 	}
 

@@ -533,8 +533,8 @@ public class LrcActivity extends Activity implements OnClickListener,
 		isServiceOpen = true;
 	}
 
-	// 切换歌曲，发送广播，通知SongAty更新相关信息
-	public void sendInfoToSongAty() {
+	// 切换歌曲，发送广播，更新相关信息
+	public void sendInfo() {
 		Intent intent = new Intent();
 		intent.setAction("switchSong");
 		intent.putExtra("currentIndex", currentIndex);
@@ -575,10 +575,9 @@ public class LrcActivity extends Activity implements OnClickListener,
 
 	@Override
 	protected void onDestroy() {
-		// Toast.makeText(context, "Main_onDestory", Toast.LENGTH_SHORT).show();
 
 		// 发送广播，通知SongAty更新相关信息
-		sendInfoToSongAty();
+		sendInfo();
 		// 注销广播接收器
 		unRegisterBroadcastRev();
 
