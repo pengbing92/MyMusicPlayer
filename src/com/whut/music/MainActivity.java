@@ -15,6 +15,8 @@ import android.view.Window;
 import android.widget.TextView;
 
 import com.whut.adapter.MyFragmentAdapter;
+import com.whut.database.service.imp.ModelServiceDao;
+import com.whut.database.service.imp.SongServiceDao;
 import com.whut.fragment.LocalMusicFragment;
 import com.whut.fragment.OnlineMusicFragment;
 
@@ -105,6 +107,8 @@ public class MainActivity extends FragmentActivity implements OnClickListener,
 	@Override
 	protected void onRestart() {
 		Log.i("MainAty", "onRestart");
+		// 更新UI
+		LocalMusicFragment.handler.sendEmptyMessage(0);
 		super.onRestart();
 	}
 

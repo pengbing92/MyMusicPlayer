@@ -32,14 +32,15 @@ import com.whut.database.service.imp.SongServiceDao;
 import com.whut.music.R;
 import com.whut.music.SongListActivity;
 import com.whut.service.MyMusicService;
-import com.whut.util.ToastUtil;
+import com.whut.util.Msg_Music;
+import com.whut.view.LrcProcess;
 
 public class LocalMusicFragment extends Fragment implements OnClickListener {
 
-	private Context context;
+	private static Context context;
 
 	private TextView localContent;
-	private RelativeLayout localBottom;
+	private RelativeLayout localBottom; // 本地音乐Fragment的底部栏
 
 	private List<Song> songList = new ArrayList<Song>();
 
@@ -54,13 +55,15 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 	}
 
 	private int secondPause;
-	private Song currentSong;
+	private static Song currentSong;
 	private long currentId;
 	private int currentModel;
 
 	private ImageView songImage;
-	private TextView songName;
-	private TextView singer;
+	private static TextView songName;
+	private static TextView singer;
+	private ImageView playBtn;
+	private ImageView nextBtn;
 
 	// 播放状态标志
 	private static boolean isPlaying;
@@ -70,23 +73,24 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 	private NotificationManager manager;
 	private boolean notification = false; // 是否有通知栏
 
-	private SongServiceDao songServiceDao;
+	private static SongServiceDao songServiceDao;
 	private ModelServiceDao modelServiceDao;
 
+	// 发送指令
+	private int msg = -1;
+	// 播放下一曲
+	private boolean playNext = false;
+	
 	@SuppressLint("HandlerLeak")
-	private Handler handler = new Handler() {
+	public static Handler handler = new Handler() {
 		public void handleMessage(android.os.Message msg) {
 			switch (msg.what) {
 			case 0:
-				// currentId发生变化,更新UI
+				// 更新UI
 				currentSong = songServiceDao.getCurrentSong();
 				songName.setText(currentSong.getSongName());
 				singer.setText(currentSong.getSinger());
 				break;
-			case 1:
-				ToastUtil.toastInfo(context, "test");
-				break;
-
 			default:
 				break;
 			}
@@ -128,8 +132,7 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 
 		Log.i("localFM", "onCreateView");
 		View view = inflater.inflate(R.layout.fragment_local, container, false);
-
-		handler.sendEmptyMessage(0);
+		
 		return view;
 	}
 
@@ -140,13 +143,17 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 				R.id.localFM_Content);
 		localBottom = (RelativeLayout) getActivity().findViewById(
 				R.id.bottomView);
-
-		localContent.setOnClickListener(this);
-		localBottom.setOnClickListener(this);
-
+		
 		songImage = (ImageView) getActivity().findViewById(R.id.songImg);
 		songName = (TextView) getActivity().findViewById(R.id.songName);
 		singer = (TextView) getActivity().findViewById(R.id.singer);
+		playBtn = (ImageView) getActivity().findViewById(R.id.play_btn);
+		nextBtn = (ImageView) getActivity().findViewById(R.id.next_btn);
+
+		localContent.setOnClickListener(this);
+		localBottom.setOnClickListener(this);
+		playBtn.setOnClickListener(this);
+		nextBtn.setOnClickListener(this);
 
 		songImage.setBackgroundResource(R.drawable.app_music);
 		songName.setText(songName_str);
@@ -166,10 +173,55 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 			Intent gotoSongListAty = new Intent(context, SongListActivity.class);
 			startActivity(gotoSongListAty);
 			break;
+		case R.id.play_btn:
+			startMusicService();
+			break;
+		case R.id.next_btn:
+			playNextSong();
+			// 切换歌曲的时候，重新设置 NOT_FOUND 的初始值为false
+			LrcProcess.setNOT_FOUND(false);
+			break;
 		default:
 			break;
 		}
 
+	}
+
+	// 通过Btn启动service
+	public void startMusicService() {
+		Intent gotoService = new Intent(context, MyMusicService.class);
+		if (playNext) {
+			secondPause = -1;
+			gotoService.putExtra("other_music", true);
+			// 重置
+			playNext = false;
+			playBtn.setBackgroundResource(R.drawable.paubtn_selector);
+		} else {
+			// 没有切换歌曲
+			if (isPlaying) {
+				msg = Msg_Music.PAUSE;
+				secondPause = -1;
+				playBtn.setBackgroundResource(R.drawable.playbtn_selector);
+			} else {
+				msg = Msg_Music.PLAY;
+				playBtn.setBackgroundResource(R.drawable.paubtn_selector);
+			}
+			gotoService.putExtra("other_music", false);
+		}
+
+		gotoService.putExtra("msg", msg);
+		gotoService.putExtra("secondPause", secondPause);
+		// 启动Service
+		context.startService(gotoService);
+		//isServiceOpen = true;
+
+	}
+	
+	// 播放下一曲
+	public void playNextSong() {
+		playNext = true;
+		msg = Msg_Music.NEXT;
+		startMusicService();
 	}
 
 	public void initData() {
@@ -217,6 +269,10 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 		IntentFilter ipFilter = new IntentFilter();
 		ipFilter.addAction("isplaying");
 		context.registerReceiver(myreceiver, ipFilter);
+		
+		IntentFilter ssFilter = new IntentFilter();
+		ssFilter.addAction("switchSong");
+		context.registerReceiver(myreceiver, ssFilter);
 
 	}
 
@@ -284,7 +340,10 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction().equals("isplaying")) {
 				isPlaying = intent.getBooleanExtra("isplaying", false);
-				handler.sendEmptyMessage(1);
+			}
+			
+			if (intent.getAction().equals("switchSong")) {
+				handler.sendEmptyMessage(0);
 			}
 		}
 	}
