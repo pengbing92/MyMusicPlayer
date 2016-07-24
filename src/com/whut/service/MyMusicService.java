@@ -2,9 +2,6 @@ package com.whut.service;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -14,13 +11,17 @@ import android.content.IntentFilter;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnSeekCompleteListener;
 import android.os.IBinder;
+import android.os.Message;
 import android.util.Log;
 
 import com.whut.application.MusicManager;
-import com.whut.entiy.Song;
+import com.whut.application.MyApplication;
+import com.whut.database.entiy.Play_Model;
+import com.whut.database.service.imp.ModelServiceDao;
+import com.whut.database.service.imp.SongServiceDao;
+import com.whut.music.LrcActivity;
 import com.whut.music.SongListActivity;
 import com.whut.util.Msg_Music;
-import com.whut.util.Play_Model;
 
 public class MyMusicService extends Service {
 
@@ -44,24 +45,13 @@ public class MyMusicService extends Service {
 	// 广播接收器
 	private SeekPositionReceiver spRev;
 	private NotificationCreated notifRev;
-	private GetCurrentModel gcmRev;
 	private CurrentPositonReceiver cpRev;
-
-	// 歌曲列表
-	private List<Song> songList = new ArrayList<Song>();
-
-	// 歌曲的list下标
-	private int currentIndex;
-
-	// 当前播放模式
-	private int currentModel = Play_Model.CYCLEALL;
 
 	// 是否有通知的标志
 	private boolean notifCreated = false;
-	
-	// 随机播放
-	private int indexArray[];  // 下标数组
-	private int randomSize;    // 随机范围
+
+	private ModelServiceDao modelServiceDao;
+	private SongServiceDao songServiceDao;
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -75,19 +65,12 @@ public class MyMusicService extends Service {
 	public void onCreate() {
 		super.onCreate();
 		mediaPlayer = new MediaPlayer();
-		songList = MusicManager.getSongsFromMediaDB(this);
+
+		modelServiceDao = new ModelServiceDao(MyApplication.getContext());
+		songServiceDao = new SongServiceDao(MyApplication.getContext());
+
 		// 注册广播接收器
 		initReceiver();
-		
-		if (songList.size() > 0) {
-
-			indexArray = new int[songList.size()];
-			for (int i = 0; i < indexArray.length; i++) {
-				indexArray[i] = i;
-			}
-
-			randomSize = songList.size();
-		}
 
 	}
 
@@ -98,8 +81,6 @@ public class MyMusicService extends Service {
 		msg = intent.getIntExtra("msg", -1);
 		other_music = intent.getBooleanExtra("other_music", false);
 		Log.i("other_music", other_music + "");
-		currentIndex = intent.getIntExtra("currentIndex", 0);
-		currentModel = intent.getIntExtra("currentModel", Play_Model.CYCLEALL);
 
 		initPlay();
 
@@ -114,8 +95,6 @@ public class MyMusicService extends Service {
 			pre();
 		} else if (msg == Msg_Music.NEXT) {
 			next();
-		} else {
-
 		}
 
 	}
@@ -129,31 +108,14 @@ public class MyMusicService extends Service {
 
 		MusicManager.setSeekPosition(-1);
 
-		// 切换上一曲
-		if (currentIndex > 0) {
-			if (currentModel == Play_Model.CYCLEALL
-					|| currentModel == Play_Model.CYCLEONE) {
-				// 列表循环或单曲循环，正常切换上一曲
-				currentIndex--;
-			} else {
-				// 随机播放模式
-				currentIndex = getRandomIndex(currentIndex);
-			}
-		} else {
-			if (currentModel == Play_Model.CYCLEALL
-					|| currentModel == Play_Model.CYCLEONE) {
-				// 最上面一首歌曲，设置currentIndex为 songList.size()-1
-				currentIndex = songList.size() - 1;
-			} else {
-				// 随机播放模式
-				currentIndex = getRandomIndex(currentIndex);
-			}
-
-		}
-		// 发送广播，通知Aty更新currentIndex
-		sendIndexBroadcast();
+		// 更新数据库
+		songServiceDao.updateCurrentSong(songServiceDao
+				.getPreSong(songServiceDao.getCurrentSong()));
 
 		play();
+
+		// 发送广播，通知Aty更新UI
+		sendSwitchSongBroadcast();
 
 	}
 
@@ -163,57 +125,17 @@ public class MyMusicService extends Service {
 	 * 自动播放下一曲和点击按钮切换两种情况
 	 */
 	public void next() {
-		
+
 		MusicManager.setSeekPosition(-1);
 
-		if (stopThread) {
-
-			other_music = true;
-			secondPause = -1;
-
-			// 单曲循环currentIndex不改变
-			if (currentModel == Play_Model.CYCLEALL) {
-				Log.i("CYCLEALL", "进入列表循环！");
-				// 列表循环
-				if (currentIndex < songList.size() - 1) {
-					currentIndex++;
-				} else {
-					currentIndex = 0;
-				}
-			}
-			if (currentModel == Play_Model.RANDOM) {
-				// 随机播放模式
-				currentIndex = getRandomIndex(currentIndex);
-			}
-		} else {
-
-			// 点击按钮切换下一曲
-			if (currentIndex < songList.size() - 1) {
-				if (currentModel == Play_Model.CYCLEALL
-						|| currentModel == Play_Model.CYCLEONE) {
-					// 列表循环或单曲循环，正常切换下一曲
-					currentIndex++;
-				} else {
-					// 随机播放模式
-					currentIndex = getRandomIndex(currentIndex);
-				}
-			} else {
-				if (currentModel == Play_Model.CYCLEALL
-						|| currentModel == Play_Model.CYCLEONE) {
-					// 重置currentIndex为0
-					currentIndex = 0;
-				} else {
-					// 随机播放模式
-					currentIndex = getRandomIndex(currentIndex);
-				}
-			}
-
-		}
-
-		// 发送广播，通知Aty更新currentIndex
-		sendIndexBroadcast();
+		// 更新数据库
+		songServiceDao.updateCurrentSong(songServiceDao
+				.getNextSong(songServiceDao.getCurrentSong()));
 
 		play();
+
+		// 发送广播，通知Aty更新UI
+		sendSwitchSongBroadcast();
 
 	}
 
@@ -233,11 +155,11 @@ public class MyMusicService extends Service {
 			MusicManager.setPlaying(false);
 			// 通知
 			Intent intent = SongListActivity.gotoLrcAty(MyMusicService.this,
-					false, currentIndex, currentModel, true);
-			MusicManager
-					.musicNotification(1, MyMusicService.this,
-							getPackageName(), intent, false, currentIndex,
-							currentModel);
+					false, true);
+			MusicManager.musicNotification(1, MyMusicService.this,
+					getPackageName(), intent, false, songServiceDao
+							.getCurrentSong().getId(), modelServiceDao
+							.getCurrentModel());
 		}
 	}
 
@@ -252,7 +174,7 @@ public class MyMusicService extends Service {
 			mediaPlayer.reset();
 		}
 
-		mp3Path = songList.get(currentIndex).getMp3Path();
+		mp3Path = songServiceDao.getCurrentSong().getMp3Path();
 
 		File file = new File(mp3Path);
 		Log.i("Service_currentPath", file.getPath());
@@ -290,31 +212,20 @@ public class MyMusicService extends Service {
 			MusicManager.setPlaying(true);
 			// 通知
 			Intent intent = SongListActivity.gotoLrcAty(MyMusicService.this,
-					true, currentIndex, currentModel, true);
+					true, true);
 			MusicManager.musicNotification(1, MyMusicService.this,
-					getPackageName(), intent, true, currentIndex, currentModel);
+					getPackageName(), intent, true, songServiceDao
+							.getCurrentSong().getId(), modelServiceDao
+							.getCurrentModel());
 		}
-		
-		sendIndexBroadcast();
+
 	}
-	
-	// 获取随机播放下标
-	public int getRandomIndex(int index) {
-		
-		if (randomSize == 0) {
-			randomSize = songList.size();
-		}
-		
-		Random random = new Random();
-		int randNum = random.nextInt(randomSize) + randomSize;
-		
-		index = randNum % randomSize;
-		int temp = indexArray[index];
-		indexArray[index] = indexArray[randomSize - 1];
-		indexArray[randomSize - 1] = temp;
-		randomSize--;
-		
-		return index;
+
+	// 发送切换歌曲广播
+	public void sendSwitchSongBroadcast() {
+		Intent intent = new Intent();
+		intent.setAction("switchSong");
+		sendBroadcast(intent);
 	}
 
 	// 发送播放状态广播
@@ -325,17 +236,6 @@ public class MyMusicService extends Service {
 		sendBroadcast(intent);
 		// 更新歌曲播放状态
 		MusicManager.setPlaying(isplaying);
-	}
-
-	// 发送currentIndex广播
-	public void sendIndexBroadcast() {
-		// 发送广播，通知Aty更新currentIndex
-		Intent intent = new Intent();
-		intent.setAction("currentIndex");
-		intent.putExtra("currentIndex", currentIndex);
-		sendBroadcast(intent);
-		// 更新播放歌曲的列表下标
-		MusicManager.setCurrentIndex(currentIndex);
 	}
 
 	// 初始化播放器
@@ -392,7 +292,7 @@ public class MyMusicService extends Service {
 
 					// 如果有通知，播放结束切换下一曲
 					if (notifCreated) {
-						if (currentModel != Play_Model.CYCLEONE) {
+						if (modelServiceDao.getCurrentModel() != Play_Model.CYCLEONE) {
 							next();
 						} else {
 							// 单曲循环，自动重播
@@ -411,12 +311,9 @@ public class MyMusicService extends Service {
 					intent.putExtra("position", temp);
 					intent.putExtra("isEnd", false);
 					sendBroadcast(intent);
-
 				}
-
 			}
 		}
-
 	}
 
 	@Override
@@ -431,7 +328,6 @@ public class MyMusicService extends Service {
 		// 注销广播接收器
 		unregisterReceiver(spRev);
 		unregisterReceiver(notifRev);
-		unregisterReceiver(gcmRev);
 		unregisterReceiver(cpRev);
 		super.onDestroy();
 	}
@@ -450,11 +346,6 @@ public class MyMusicService extends Service {
 		notifFilter.addAction("notification");
 		registerReceiver(notifRev, notifFilter);
 
-		gcmRev = new GetCurrentModel();
-		IntentFilter gcmFilter = new IntentFilter();
-		gcmFilter.addAction("playModel");
-		registerReceiver(gcmRev, gcmFilter);
-		
 		cpRev = new CurrentPositonReceiver();
 		IntentFilter cpFilter = new IntentFilter();
 		cpFilter.addAction("GetPosition");
@@ -485,19 +376,6 @@ public class MyMusicService extends Service {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			notifCreated = intent.getBooleanExtra("notification", false);
-
-		}
-
-	}
-
-	// 获取当前播放模式
-	public class GetCurrentModel extends BroadcastReceiver {
-
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			currentModel = intent.getIntExtra("currentModel",
-					Play_Model.CYCLEALL);
-
 		}
 	}
 
@@ -508,9 +386,7 @@ public class MyMusicService extends Service {
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getBooleanExtra("isEnd", false)) {
 				play();
-			} 
+			}
 		}
-
 	}
-
 }

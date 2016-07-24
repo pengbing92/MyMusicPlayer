@@ -2,6 +2,7 @@ package com.whut.adapter;
 
 import java.util.List;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
@@ -13,7 +14,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.whut.application.MusicManager;
-import com.whut.entiy.Song;
+import com.whut.database.entiy.Song;
 import com.whut.music.R;
 
 /**
@@ -33,7 +34,7 @@ public class SongListAdapter extends BaseAdapter {
 	// 正在播放的歌曲的id，用以突出显示
 	private long currentItem;
 	
-	public void setCurrentItem(int currentItem) {
+	public void setCurrentItem(long currentItem) {
 		this.currentItem = currentItem;
 	}
 
@@ -66,6 +67,7 @@ public class SongListAdapter extends BaseAdapter {
 		return position;
 	}
 
+	@SuppressLint("InflateParams")
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		Song song = songList.get(position);
@@ -99,7 +101,7 @@ public class SongListAdapter extends BaseAdapter {
 		
 
 		// 根据传入的下标，将相应的item的字体显示为红色
-		if (currentItem == position) {
+		if (currentItem == song.getId()) {
 			viewHolder.song_name.setTextColor(context.getResources().getColor(
 					R.color.red));
 		}else {

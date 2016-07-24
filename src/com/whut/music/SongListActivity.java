@@ -9,7 +9,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -32,35 +31,37 @@ import android.widget.Toast;
 
 import com.whut.adapter.SongListAdapter;
 import com.whut.application.MusicManager;
-import com.whut.entiy.Song;
+import com.whut.database.entiy.Play_Model;
+import com.whut.database.entiy.Song;
+import com.whut.database.service.imp.ModelServiceDao;
+import com.whut.database.service.imp.SongServiceDao;
 import com.whut.service.MyMusicService;
 import com.whut.util.Msg_Music;
-import com.whut.util.Play_Model;
 import com.whut.util.ToastUtil;
 import com.whut.view.LrcProcess;
 
 public class SongListActivity extends Activity implements OnClickListener,
 		OnItemClickListener {
 
-	private List<Song> songList;
+	private List<Song> songList = new ArrayList<Song>();
 	private ListView songListView;
 	private RelativeLayout bottomLayout;
 	private ImageView songImage;
-	private TextView songName;
-	private TextView singer;
+	private static TextView songName;
+	private static TextView singer;
 	private ImageView playBtn;
 	private ImageView nextBtn;
 	
 	// 后退按钮
 	private ImageView back_Btn;
 
-	private Context context;
+	private static Context context;
 
-	private String songName_str = ""; // 歌曲名
-	private String singer_str = ""; // 歌手名
+	private static String songName_str = ""; // 歌曲名
+	private static String singer_str = ""; // 歌手名
 	private int secondPause = -1; // 播放中断位置，默认值为-1
 
-	private SongListAdapter songListAdapter;
+	private static SongListAdapter songListAdapter;
 
 	// 播放状态标志
 	private static boolean isPlaying;
@@ -69,18 +70,16 @@ public class SongListActivity extends Activity implements OnClickListener,
 	private IsplayingReceiver ipRev;
 	private SecondPauseReceiver spRev;
 	private CurrentPositonReceiver cpRev;
-	private SwitchSongByMainAty ssbmRev;
-	private GetCurrentModel gcmRev;
-	private GetCurrentIndex gciRev;
+	private SwitchSongReceiver ssRev;
 	private HeadSetStatus hssRev; // 接收耳机插拔状态的广播
 	private static int HEADSET_DISCONNECT = 0; // 未插耳机
 	private static int HEADSET_CONNECT = 1; // 插入耳机
 
 	// 当前正在播放的歌曲
 	private static int currentPosition = 0; // 当前播放的位置
-	private static int currentIndex = 0; // 当前播放歌曲的下标
-	//private static int currentId    = 0; // 当前播放歌曲的id
+	private static long currentId = 0; // 当前播放歌曲的id
 	private static int currentModel = Play_Model.CYCLEALL; // 当前播放模式,默认为列表循环
+	private static Song currentSong;
 
 	// 播放是否结束
 	private boolean isEnd = false;
@@ -101,6 +100,10 @@ public class SongListActivity extends Activity implements OnClickListener,
 	// 歌曲缩略图旋转动画
 	private ObjectAnimator objectAnimatorPre; // 先从0旋转到180
 	private ObjectAnimator objectAnimatorNext; // 再从180旋转到360，周而复始
+	
+	private static SongServiceDao songServiceDao;
+	private static ModelServiceDao modelServiceDao;
+	
 
 	public static int getCurrentPosition() {
 		return currentPosition;
@@ -116,20 +119,17 @@ public class SongListActivity extends Activity implements OnClickListener,
 				// Log.i("currentPosition", msg.arg1+"");
 				break;
 			case 1:
-				songName_str = songList.get(currentIndex).getSongName();
-				singer_str = songList.get(currentIndex).getSinger();
+				currentSong = songServiceDao.getCurrentSong();
+				currentId = currentSong.getId();
+				songName_str = currentSong.getSongName();
+				singer_str = currentSong.getSinger();
 				songName.setText(songName_str);
 				singer.setText(singer_str);
-				// 正在播放的字体变红
-				songListAdapter.setCurrentItem(currentIndex);
-				songListView.setSelection(currentIndex);
+				// 正在播放的歌曲字体变红
+				songListAdapter.setCurrentItem(currentId);
 				songListAdapter.notifyDataSetChanged();
 				break;
 			case 2:
-				// 播放模式
-				MusicManager.setCurrentModel(currentModel);
-				break;
-			case 3:
 				if (msg.arg1 == HEADSET_DISCONNECT) {
 					ToastUtil.toastInfo(context, "未插入耳机");
 				} else {
@@ -147,6 +147,10 @@ public class SongListActivity extends Activity implements OnClickListener,
 		setContentView(R.layout.activity_song_list);
 
 		context = this;
+		
+		currentSong = new Song();
+		songServiceDao = new SongServiceDao(context);
+		modelServiceDao = new ModelServiceDao(context);
 
 		Toast.makeText(context, "Song_onCreate", Toast.LENGTH_SHORT).show();
 
@@ -178,7 +182,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 	}
 
 	/**
-	 * 执行流程onCreate->onStart->onResume, 从MainAty执行onStart->onResume
+	 * 执行流程onCreate->onStart->onResume, 从LrcAty进入则执行onStart->onResume
 	 */
 	@Override
 	protected void onResume() {
@@ -188,7 +192,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 		} else {
 			playBtn.setBackgroundResource(R.drawable.playbtn_selector);
 		}
-		// 若MainAty中切换了歌曲，更新UI
+		// 若LrcAty中切换了歌曲，更新UI
 		handler.sendEmptyMessage(1);
 
 		// 开启旋转动画效果
@@ -213,21 +217,11 @@ public class SongListActivity extends Activity implements OnClickListener,
 		IntentFilter cpFilter = new IntentFilter();
 		cpFilter.addAction("GetPosition");
 		registerReceiver(cpRev, cpFilter);
-
-		ssbmRev = new SwitchSongByMainAty();
-		IntentFilter ssbmFilter = new IntentFilter();
-		ssbmFilter.addAction("switchSong");
-		registerReceiver(ssbmRev, ssbmFilter);
-
-		gcmRev = new GetCurrentModel();
-		IntentFilter gcmFilter = new IntentFilter();
-		gcmFilter.addAction("playModel");
-		registerReceiver(gcmRev, gcmFilter);
-
-		gciRev = new GetCurrentIndex();
-		IntentFilter gciFilter = new IntentFilter();
-		gciFilter.addAction("currentIndex");
-		registerReceiver(gciRev, gciFilter);
+		
+		ssRev = new SwitchSongReceiver();
+		IntentFilter ssFilter = new IntentFilter();
+		ssFilter.addAction("switchSong");
+		registerReceiver(ssRev, ssFilter);
 
 		hssRev = new HeadSetStatus();
 		IntentFilter hssFilter = new IntentFilter();
@@ -238,25 +232,15 @@ public class SongListActivity extends Activity implements OnClickListener,
 
 	// 初始化数据
 	public void initData() {
-
-		songList = new ArrayList<Song>();
-		songList = MusicManager.getSongsFromMediaDB(context);
-
-		if (songList.size() > 0) {
-
-			if (songName_str.equals("")) {
-				songName_str = songList.get(0).getSongName();
-			}
-
-			if (singer_str.equals("")) {
-				singer_str = songList.get(0).getSinger();
-			}
-
-		}
+		
+		songList = songServiceDao.getAllSong();
 
 		isPlaying = MusicManager.isPlaying();
-		currentIndex = MusicManager.getCurrentIndex();
-		currentModel = MusicManager.getCurrentModel();
+		currentSong = songServiceDao.getCurrentSong();
+		currentId = currentSong.getId();
+		songName_str = currentSong.getSongName();
+		singer_str = currentSong.getSinger();
+		currentModel = modelServiceDao.getCurrentModel();
 		isServiceOpen = MusicManager.isServiceOpen();
 
 		songListAdapter = new SongListAdapter(songList, context);
@@ -289,9 +273,9 @@ public class SongListActivity extends Activity implements OnClickListener,
 
 		songName.setText(songName_str);
 		singer.setText(singer_str);
-
-		// 上次退出时播放的歌曲显示为红色
-		handler.sendEmptyMessage(1);
+		songListAdapter.setCurrentItem(currentId);
+		songListAdapter.notifyDataSetChanged();
+		
 
 		// 点击事件监听
 		bottomLayout.setOnClickListener(this);
@@ -341,8 +325,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 		switch (v.getId()) {
 		case R.id.bottomView:
 			// 从SongAty跳转到LrcAty
-			startActivity(gotoLrcAty(context, isPlaying, currentIndex,
-					currentModel, false));
+			startActivity(gotoLrcAty(context, isPlaying, false));
 			break;
 		case R.id.play_btn:
 			startMusicService();
@@ -383,11 +366,10 @@ public class SongListActivity extends Activity implements OnClickListener,
 
 		gotoService.putExtra("msg", msg);
 		gotoService.putExtra("secondPause", secondPause);
-		gotoService.putExtra("currentModel", currentModel);
-		gotoService.putExtra("currentIndex", currentIndex);
 		// 启动Service
 		startService(gotoService);
 		isServiceOpen = true;
+
 	}
 
 	@Override
@@ -403,13 +385,10 @@ public class SongListActivity extends Activity implements OnClickListener,
 	 * 
 	 * @return intent
 	 */
-	public static Intent gotoLrcAty(Context context, boolean isPlaying,
-			int currentIndex, int currentModel, boolean fromNotification) {
+	public static Intent gotoLrcAty(Context context, boolean isPlaying, boolean fromNotification) {
 
 		Intent intent = new Intent(context, LrcActivity.class);
 		intent.putExtra("isPlaying", isPlaying);
-		intent.putExtra("currentIndex", currentIndex);
-		intent.putExtra("currentModel", currentModel);
 		intent.putExtra("fromNotification", fromNotification);
 		if (fromNotification) {
 			if (isPlaying) {
@@ -429,9 +408,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 		unregisterReceiver(ipRev);
 		unregisterReceiver(spRev);
 		unregisterReceiver(cpRev);
-		unregisterReceiver(ssbmRev);
-		unregisterReceiver(gcmRev);
-		unregisterReceiver(gciRev);
+		unregisterReceiver(ssRev);
 		unregisterReceiver(hssRev);
 	}
 
@@ -439,24 +416,28 @@ public class SongListActivity extends Activity implements OnClickListener,
 	public void onItemClick(AdapterView<?> parent, View view, int position,
 			long id) {
 
-		if (currentIndex == position) {
+		if (currentId == songList.get(position).getId()) {
 			// 点击的是同一首歌曲
 			playNext = false;
 		} else {
+			ToastUtil.toastInfo(context, songList.get(position).getSongName());
 			// 点击的不是同一首歌曲
 			MusicManager.setSeekPosition(-1);
 
 			playNext = true;
 			msg = Msg_Music.PLAY;
 			
+			// 更新当前播放歌曲id
+			currentId = songList.get(position).getId();
+			// 更新数据库
+			songServiceDao.updateCurrentSong(songList.get(position));
+			
+			// 更新UI
+			handler.sendEmptyMessage(1);
+			
 			// 切换歌曲的时候，重新设置 NOT_FOUND 的初始值为false
 			LrcProcess.setNOT_FOUND(false);
 		}
-
-		currentIndex = position;
-
-		// 更新UI
-		handler.sendEmptyMessage(1);
 
 		startMusicService();
 
@@ -537,42 +518,17 @@ public class SongListActivity extends Activity implements OnClickListener,
 		public void onReceive(Context context, Intent intent) {
 			secondPause = intent.getIntExtra("secondPause", -1);
 		}
-
 	}
-
-	// MainAty中切换了歌曲,SongAty作相应改变
-	public class SwitchSongByMainAty extends BroadcastReceiver {
+	
+	// 切换音乐
+	public class SwitchSongReceiver extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			currentIndex = intent.getIntExtra("currentIndex", 0);
-			songName_str = songList.get(currentIndex).getSongName();
-			singer_str = songList.get(currentIndex).getSinger();
-		}
-
-	}
-
-	// 获取当前播放模式
-	public class GetCurrentModel extends BroadcastReceiver {
-
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			currentModel = intent.getIntExtra("currentModel",
-					Play_Model.CYCLEALL);
-			handler.sendEmptyMessage(2);
-
-		}
-	}
-
-	// 获取当前播放歌曲的下标
-	public class GetCurrentIndex extends BroadcastReceiver {
-
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			currentIndex = intent.getIntExtra("currentIndex", 0);
 			handler.sendEmptyMessage(1);
+			
 		}
-
+		
 	}
 
 	// 实时监测耳机插拔状态
@@ -581,7 +537,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			Message msg = handler.obtainMessage();
-			msg.what = 3;
+			msg.what = 2;
 			if (intent.hasExtra("state")) {
 
 				if (intent.getIntExtra("state", 0) == 0) {

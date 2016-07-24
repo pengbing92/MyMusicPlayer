@@ -16,14 +16,13 @@ import android.graphics.BitmapFactory.Options;
 import android.provider.MediaStore;
 import android.widget.RemoteViews;
 
-import com.whut.entiy.Song;
+import com.whut.database.entiy.Song;
+import com.whut.database.service.imp.SongServiceDao;
 import com.whut.fragment.LocalMusicFragment;
 import com.whut.music.MainActivity;
 import com.whut.music.R;
-import com.whut.music.SongListActivity;
 import com.whut.service.MyMusicService;
 import com.whut.util.Msg_Music;
-import com.whut.util.Play_Model;
 
 public class MusicManager {
 
@@ -31,9 +30,6 @@ public class MusicManager {
 	private static boolean notifMainToSong = false; 
 
 	private static boolean isPlaying = false;
-	private static int currentIndex = 0;
-	private static int currentModel = Play_Model.CYCLEALL;
-	private static long id = 0;
 
 	private static int seekPosition = -1;
 
@@ -64,22 +60,6 @@ public class MusicManager {
 		MusicManager.notifMainToSong = notifMainToSong;
 	}
 
-	public static int getCurrentIndex() {
-		return currentIndex;
-	}
-
-	public static void setCurrentIndex(int currentIndex) {
-		MusicManager.currentIndex = currentIndex;
-	}
-
-	public static int getCurrentModel() {
-		return currentModel;
-	}
-
-	public static void setCurrentModel(int currentModel) {
-		MusicManager.currentModel = currentModel;
-	}
-
 	public static boolean isPlaying() {
 		return isPlaying;
 	}
@@ -88,13 +68,6 @@ public class MusicManager {
 		MusicManager.isPlaying = isPlaying;
 	}
 
-	public static long getId() {
-		return id;
-	}
-
-	public static void setId(long id) {
-		MusicManager.id = id;
-	}
 
 	/**
 	 * 从媒体库中获取本机上的MP3文件
@@ -164,13 +137,12 @@ public class MusicManager {
 	 * @param packageName
 	 * @param AtyIntent
 	 * @param isPlaying
-	 * @param currentIndex
+	 * @param currentId
 	 * @param currentModel
 	 */
-	@SuppressWarnings("null")
 	public static void musicNotification(int id, Context context,
 			String packageName, Intent AtyIntent, Boolean isPlaying,
-			int currentIndex, int currentModel) {
+			long currentId, int currentModel) {
 
 		NotificationManager manager = null;
 		Notification notification = null;
@@ -187,10 +159,11 @@ public class MusicManager {
 		RemoteViews remoteViews = new RemoteViews(packageName,
 				R.layout.notification);
 		// 设置通知栏的歌曲名和歌手名
-		String songName = getSongsFromMediaDB(context).get(currentIndex)
-				.getSongName();
-		String singer = getSongsFromMediaDB(context).get(currentIndex)
-				.getSinger();
+		Song currentSong = new Song();
+		SongServiceDao songServiceDao = new SongServiceDao(context);
+		currentSong = songServiceDao.getCurrentSong();
+		String songName = currentSong.getSongName();
+		String singer = currentSong.getSinger();
 		remoteViews.setTextViewText(R.id.notif_name, songName);
 		remoteViews.setTextViewText(R.id.notif_singer, singer);
 
@@ -211,8 +184,6 @@ public class MusicManager {
 			intentPlayBtn.putExtra("secondPause", -1); // 需要改
 		}
 		intentPlayBtn.putExtra("other_music", false);
-		intentPlayBtn.putExtra("currentModel", currentModel);
-		intentPlayBtn.putExtra("currentIndex", currentIndex);
 		PendingIntent playBtn = PendingIntent.getService(context, 1,
 				intentPlayBtn, PendingIntent.FLAG_UPDATE_CURRENT);
 		remoteViews.setOnClickPendingIntent(R.id.notif_pause, playBtn);
@@ -221,8 +192,6 @@ public class MusicManager {
 		intentNextBtn.putExtra("msg", Msg_Music.NEXT);
 		intentNextBtn.putExtra("secondPause", -1);
 		intentNextBtn.putExtra("other_music", true);
-		intentNextBtn.putExtra("currentModel", currentModel);
-		intentNextBtn.putExtra("currentIndex", currentIndex);
 		PendingIntent nextBtn = PendingIntent.getService(context, 2,
 				intentNextBtn, PendingIntent.FLAG_UPDATE_CURRENT);
 		remoteViews.setOnClickPendingIntent(R.id.notif_next, nextBtn);
@@ -231,8 +200,6 @@ public class MusicManager {
 		intentPreBtn.putExtra("msg", Msg_Music.PRE);
 		intentPreBtn.putExtra("secondPause", -1);
 		intentPreBtn.putExtra("other_music", true);
-		intentPreBtn.putExtra("currentModel", currentModel);
-		intentPreBtn.putExtra("currentIndex", currentIndex);
 		PendingIntent preBtn = PendingIntent.getService(context, 3,
 				intentPreBtn, PendingIntent.FLAG_UPDATE_CURRENT);
 		remoteViews.setOnClickPendingIntent(R.id.notif_previous, preBtn);
@@ -276,7 +243,7 @@ public class MusicManager {
 		manager.notify(id, notification);
 
 		// 保存数据
-		LocalMusicFragment.getEditor().putInt("currentIndex", currentIndex);
+		LocalMusicFragment.getEditor().putLong("currentId", currentId);
 		LocalMusicFragment.getEditor().putInt("currentModel", currentModel);
 		LocalMusicFragment.getEditor().commit();
 

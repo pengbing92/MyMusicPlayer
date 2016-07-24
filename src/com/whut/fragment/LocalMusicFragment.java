@@ -25,11 +25,13 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.whut.application.MusicManager;
-import com.whut.entiy.Song;
+import com.whut.database.entiy.Play_Model;
+import com.whut.database.entiy.Song;
+import com.whut.database.service.imp.ModelServiceDao;
+import com.whut.database.service.imp.SongServiceDao;
 import com.whut.music.R;
 import com.whut.music.SongListActivity;
 import com.whut.service.MyMusicService;
-import com.whut.util.Play_Model;
 import com.whut.util.ToastUtil;
 
 public class LocalMusicFragment extends Fragment implements OnClickListener {
@@ -52,16 +54,9 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 	}
 
 	private int secondPause;
-	private int currentIndex;
+	private Song currentSong;
+	private long currentId;
 	private int currentModel;
-
-	public void setCurrentIndex(int currentIndex) {
-		this.currentIndex = currentIndex;
-	}
-
-	public void setCurrentModel(int currentModel) {
-		this.currentModel = currentModel;
-	}
 
 	private ImageView songImage;
 	private TextView songName;
@@ -75,14 +70,18 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 	private NotificationManager manager;
 	private boolean notification = false; // 是否有通知栏
 
+	private SongServiceDao songServiceDao;
+	private ModelServiceDao modelServiceDao;
+
 	@SuppressLint("HandlerLeak")
 	private Handler handler = new Handler() {
 		public void handleMessage(android.os.Message msg) {
 			switch (msg.what) {
 			case 0:
-				// currentIndex发生变化,更新UI
-				songName.setText(songList.get(currentIndex).getSongName());
-				singer.setText(songList.get(currentIndex).getSinger());
+				// currentId发生变化,更新UI
+				currentSong = songServiceDao.getCurrentSong();
+				songName.setText(currentSong.getSongName());
+				singer.setText(currentSong.getSinger());
 				break;
 			case 1:
 				ToastUtil.toastInfo(context, "test");
@@ -100,6 +99,10 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 		 * onCreate方法只执行一次
 		 */
 		context = getActivity();
+
+		currentSong = new Song();
+		songServiceDao = new SongServiceDao(context);
+		modelServiceDao = new ModelServiceDao(context);
 
 		// 通知栏管理
 		manager = (NotificationManager) context
@@ -125,6 +128,8 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 
 		Log.i("localFM", "onCreateView");
 		View view = inflater.inflate(R.layout.fragment_local, container, false);
+
+		handler.sendEmptyMessage(0);
 		return view;
 	}
 
@@ -154,8 +159,8 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.bottomView:
-			startActivity(SongListActivity.gotoLrcAty(context, isPlaying,
-					currentIndex, MusicManager.getCurrentModel(), false));
+			startActivity(SongListActivity
+					.gotoLrcAty(context, isPlaying, false));
 			break;
 		case R.id.localFM_Content:
 			Intent gotoSongListAty = new Intent(context, SongListActivity.class);
@@ -171,34 +176,34 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 
 		songList = MusicManager.getSongsFromMediaDB(context);
 
-		if (songList.size() > 0) {
-
-			if (songName_str.equals("")) {
-				songName_str = songList.get(0).getSongName();
-			}
-
-			if (singer_str.equals("")) {
-				singer_str = songList.get(0).getSinger();
-			}
-
-		}
-
 		// 从SharedPreferences中获取数据
 		preferences = context.getSharedPreferences("songInfo",
 				Context.MODE_PRIVATE);
 		editor = preferences.edit();
-
 		secondPause = preferences.getInt("secondPause", -1);
-		currentIndex = preferences.getInt("currentIndex", 0);
+		currentId = preferences.getLong("currentId", 0);
 		currentModel = preferences.getInt("currentModel", Play_Model.CYCLEALL);
-		songName_str = songList.get(currentIndex).getSongName();
-		singer_str = songList.get(currentIndex).getSinger();
-		
-		MusicManager.setCurrentModel(currentModel);
-		
+
+		if (songList.size() > 0) {
+			songServiceDao.addMusicList2DB(songList);
+
+			if (currentId != 0) {
+				songServiceDao.updateCurrentSong(songServiceDao
+						.getSongById(currentId));
+			} else {
+				songServiceDao.updateCurrentSong(songList.get(0));
+			}
+
+			currentSong = songServiceDao.getCurrentSong();
+			songName_str = currentSong.getSongName();
+			singer_str = currentSong.getSinger();
+
+		}
+
+		modelServiceDao.updateCurrentModel(currentModel);
+
 		/**
-		 * 点击通知栏进入LrcAty，后退进入MainAty
-		 * 此时LocalFM的广播接收器才注册，接收不到播放状态广播
+		 * 点击通知栏进入LrcAty，后退进入MainAty 此时LocalFM的广播接收器才注册，接收不到播放状态广播
 		 */
 		isPlaying = MusicManager.isPlaying();
 
@@ -213,20 +218,15 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 		ipFilter.addAction("isplaying");
 		context.registerReceiver(myreceiver, ipFilter);
 
-		IntentFilter gciFilter = new IntentFilter();
-		gciFilter.addAction("currentIndex");
-		context.registerReceiver(myreceiver, gciFilter);
-
 	}
 
 	// 保存退出时的歌曲信息
-	public static void recordPause(int currentPosition, int currentIndex,
-			int currentModel) {
+	public void recordPause(int currentPosition) {
 		Log.i("MusicDemo", "sharedPreferences");
 
 		editor.putInt("secondPause", currentPosition);
-		editor.putInt("currentIndex", currentIndex);
-		editor.putInt("currentModel", currentModel);
+		editor.putLong("currentId", songServiceDao.getCurrentSong().getId());
+		editor.putInt("currentModel", modelServiceDao.getCurrentModel());
 		editor.commit();
 
 		MusicManager.setPlaying(isPlaying);
@@ -241,10 +241,10 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 		if (isPlaying) {
 			MusicManager.setPlaying(isPlaying);
 			MusicManager.musicNotification(1, context,
-					context.getPackageName(), SongListActivity.gotoLrcAty(
-							context, true, currentIndex,
-							MusicManager.getCurrentModel(), true), true,
-					currentIndex, MusicManager.getCurrentModel());
+					context.getPackageName(),
+					SongListActivity.gotoLrcAty(context, true, true), true,
+					songServiceDao.getCurrentSong().getId(),
+					modelServiceDao.getCurrentModel());
 
 			// 发送广播，通知service，已经构建系统通知栏
 			notification = true;
@@ -257,8 +257,7 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 			context.stopService(intent);
 		}
 		// 保存退出时的歌曲信息
-		recordPause(SongListActivity.getCurrentPosition(), currentIndex,
-				MusicManager.getCurrentModel());
+		recordPause(SongListActivity.getCurrentPosition());
 		// 注销广播接收器
 		context.unregisterReceiver(myreceiver);
 		super.onDestroy();
@@ -287,13 +286,7 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 				isPlaying = intent.getBooleanExtra("isplaying", false);
 				handler.sendEmptyMessage(1);
 			}
-
-			if (intent.getAction().equals("currentIndex")) {
-				currentIndex = intent.getIntExtra("currentIndex", 0);
-				handler.sendEmptyMessage(0);
-			}
 		}
-
 	}
 
 }

@@ -13,8 +13,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -26,14 +24,15 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.whut.application.MusicManager;
+import com.whut.database.entiy.Play_Model;
+import com.whut.database.service.imp.ModelServiceDao;
+import com.whut.database.service.imp.SongServiceDao;
 import com.whut.entiy.LrcContent;
-import com.whut.entiy.Song;
 import com.whut.service.MyMusicService;
 import com.whut.util.Msg_Music;
-import com.whut.util.Play_Model;
+import com.whut.util.ToastUtil;
 import com.whut.view.LrcProcess;
 import com.whut.view.LrcView;
 
@@ -45,45 +44,41 @@ public class LrcActivity extends Activity implements OnClickListener,
 	private ImageView pau_btn;
 	private ImageView next_btn;
 
-	private ImageView play_model; // 播放模式:列表循环，单曲循环，顺序播放，随机播放
+	private ImageView play_model; // 播放模式:列表循环，单曲循环，随机播放
 
 	// 进度条，歌曲时长
-	private SeekBar lineOfTime;
-	private TextView endTime;
+	private static SeekBar lineOfTime;
+	private static TextView endTime;
 
 	// 当前播放的时间
-	private TextView currentTime;
+	private static TextView currentTime;
 
-	private int duration = 0; // 歌曲时长
-	private int currentPosition = 0; // 当前播放位置
+	private static int duration = 0; // 歌曲时长
+	private static int currentPosition = 0; // 当前播放位置
 
 	// 播放中断位置，默认值为-1
 	private int secondPause = -1;
 
-	private int minute;
-	private int second;
-	private int millisecond;
+	private static int minute;
+	private static int second;
+	private static int millisecond;
 
 	private Context context;
-
-	// 保存播放中断位置
-	private SharedPreferences sharedPreferences;
-	private Editor editor;
 
 	// 拖动位置
 	private int seekPosition = 0;
 
 	// 歌词相关
-	private LrcView lrcView;
-	private LrcProcess mLrcProcess;
-	private List<LrcContent> lrcList = new ArrayList<LrcContent>();
-	private int index = 0; // 歌词内容列表下标
+	private static LrcView lrcView;
+	private static LrcProcess mLrcProcess;
+	private static List<LrcContent> lrcList = new ArrayList<LrcContent>();
+	private static int index = 0; // 歌词内容列表下标
 
 	// 界面顶部展示歌曲名和歌手名
-	private TextView song_singer;
-	private TextView song_name;
-	private String songName = "";
-	private String singer = "";
+	private static TextView song_singer;
+	private static TextView song_name;
+	private static String songName = "";
+	private static String singer = "";
 
 	// 播放标志
 	private boolean isPlaying = false;
@@ -96,10 +91,8 @@ public class LrcActivity extends Activity implements OnClickListener,
 	private SecondPauseReceiver spRev;
 	private IsplayingReceiver ipRev;
 	private SeekCompleteReceiver scRev;
-	private GetCurrentIndex gciRev;
+	private SwitchSongReceiver ssRev;
 
-	private List<Song> songList = new ArrayList<Song>(); // 歌曲列表
-	private int currentIndex = 0; // 当前播放歌曲在列表中的下标
 	private boolean switchSong = false; // 切换歌曲的标志
 
 	private int currentModel = Play_Model.CYCLEALL; // 当前播放模式,默认为列表循环
@@ -118,10 +111,13 @@ public class LrcActivity extends Activity implements OnClickListener,
 
 	// 后退按钮
 	private ImageView back_Btn;
-	
+
 	// 顶部平移动画
 	private ObjectAnimator objectAnimatorLeft;
 	private ObjectAnimator objectAnimatorRight;
+
+	private ModelServiceDao modelServiceDao;
+	private static SongServiceDao songServiceDao;
 
 	@SuppressLint("HandlerLeak")
 	private Handler handler = new Handler() {
@@ -133,9 +129,9 @@ public class LrcActivity extends Activity implements OnClickListener,
 				break;
 			case 1:
 				// 更新界面
-				songName = songList.get(currentIndex).getSongName();
-				singer = songList.get(currentIndex).getSinger();
-				duration = songList.get(currentIndex).getDuration();
+				songName = songServiceDao.getCurrentSong().getSongName();
+				singer = songServiceDao.getCurrentSong().getSinger();
+				duration = songServiceDao.getCurrentSong().getDuration();
 				song_name.setText(songName);
 				song_singer.setText(singer);
 				endTime.setText(getSongTime(duration));
@@ -147,7 +143,7 @@ public class LrcActivity extends Activity implements OnClickListener,
 	};
 
 	// 格式化当前播放时间
-	public String currentSecond2String(int currentSecond) {
+	public static String currentSecond2String(int currentSecond) {
 
 		int minute = currentSecond / 60000;
 		int second = (currentSecond - minute * 60000) / 1000;
@@ -163,6 +159,11 @@ public class LrcActivity extends Activity implements OnClickListener,
 
 		context = this;
 
+		modelServiceDao = new ModelServiceDao(context);
+		songServiceDao = new SongServiceDao(context);
+
+		currentModel = modelServiceDao.getCurrentModel();
+
 		initReceiver();
 
 		// 通知栏管理
@@ -176,27 +177,15 @@ public class LrcActivity extends Activity implements OnClickListener,
 
 		// 从Intent中获取数据
 		isPlaying = getIntent().getBooleanExtra("isPlaying", false);
-		currentIndex = getIntent().getIntExtra("currentIndex", 0);
-		currentModel = getIntent().getIntExtra("currentModel",
-				Play_Model.CYCLEALL);
 		fromNotification = getIntent().getBooleanExtra("fromNotification",
 				false);
-
-		// 从SharedPreferences中读取数据
-		sharedPreferences = getSharedPreferences("songInfo",
-				Context.MODE_PRIVATE);
-		secondPause = sharedPreferences.getInt("secondPause", -1);
-		if (currentIndex != sharedPreferences.getInt("currentIndex", 0)) {
-			secondPause = -1;
-		}
 
 		isServiceOpen = MusicManager.isServiceOpen();
 
 		// 初始化歌曲信息
-		songList = MusicManager.getSongsFromMediaDB(context);
-		songName = songList.get(currentIndex).getSongName();
-		singer = songList.get(currentIndex).getSinger();
-		duration = songList.get(currentIndex).getDuration();
+		songName = songServiceDao.getCurrentSong().getSongName();
+		singer = songServiceDao.getCurrentSong().getSinger();
+		duration = songServiceDao.getCurrentSong().getDuration();
 
 		initView();
 		// 初始化歌词显示
@@ -210,7 +199,11 @@ public class LrcActivity extends Activity implements OnClickListener,
 		spRev = new SecondPauseReceiver();
 		ipRev = new IsplayingReceiver();
 		scRev = new SeekCompleteReceiver();
-		gciRev = new GetCurrentIndex();
+		ssRev = new SwitchSongReceiver();
+
+		IntentFilter ssFilter = new IntentFilter();
+		ssFilter.addAction("switchSong");
+		registerReceiver(ssRev, ssFilter);
 
 		IntentFilter cpFilter = new IntentFilter();
 		cpFilter.addAction("GetPosition");
@@ -227,10 +220,6 @@ public class LrcActivity extends Activity implements OnClickListener,
 		IntentFilter scFilter = new IntentFilter();
 		scFilter.addAction("seekComplete");
 		registerReceiver(scRev, scFilter);
-
-		IntentFilter gciFilter = new IntentFilter();
-		gciFilter.addAction("currentIndex");
-		registerReceiver(gciRev, gciFilter);
 
 	}
 
@@ -257,7 +246,7 @@ public class LrcActivity extends Activity implements OnClickListener,
 	};
 
 	// 取歌词list的下标
-	public int lrcIndex() {
+	public static int lrcIndex() {
 
 		if (currentPosition < duration) {
 			for (int i = 0; i < lrcList.size(); i++) {
@@ -324,6 +313,7 @@ public class LrcActivity extends Activity implements OnClickListener,
 			pau_btn.setBackgroundResource(R.drawable.playbtn_selector);
 		}
 
+		// 播放模式按钮背景图
 		switch (currentModel) {
 		case Play_Model.CYCLEALL:
 			play_model.setBackgroundResource(R.drawable.cycleall_selector);
@@ -373,30 +363,30 @@ public class LrcActivity extends Activity implements OnClickListener,
 		 */
 		float songNameX = song_name.getTranslationX();
 		// 从当前位置向屏幕左侧平移
-		objectAnimatorLeft = ObjectAnimator.ofFloat(song_name,
-				"translationX", songNameX, -600f);
+		objectAnimatorLeft = ObjectAnimator.ofFloat(song_name, "translationX",
+				songNameX, -600f);
 		objectAnimatorLeft.setDuration(2500);
 		objectAnimatorLeft.start();
 		// 从屏幕右侧向初始位置平移
-		objectAnimatorRight = ObjectAnimator.ofFloat(song_name, 
-				"translationX", 600f, songNameX);
+		objectAnimatorRight = ObjectAnimator.ofFloat(song_name, "translationX",
+				600f, songNameX);
 		objectAnimatorRight.setDuration(2500);
 
 		// 动画状态监听
 		objectAnimatorLeft.addListener(new AnimatorListenerAdapter() {
-			
+
 			@Override
 			public void onAnimationEnd(Animator animation) {
 				super.onAnimationEnd(animation);
 				/**
 				 * 实现循环滚动效果，当向屏幕左侧平移结束，开始从屏幕右侧向左移
 				 */
-				objectAnimatorRight.start();			
-			}	
+				objectAnimatorRight.start();
+			}
 		});
-		
+
 		objectAnimatorRight.addListener(new AnimatorListenerAdapter() {
-			
+
 			@Override
 			public void onAnimationEnd(Animator animation) {
 				super.onAnimationEnd(animation);
@@ -410,7 +400,7 @@ public class LrcActivity extends Activity implements OnClickListener,
 	}
 
 	// 格式化歌曲时长
-	public String getSongTime(int songTime) {
+	public static String getSongTime(int songTime) {
 
 		minute = songTime / 60000;
 		second = (songTime - minute * 60000) / 1000;
@@ -422,7 +412,7 @@ public class LrcActivity extends Activity implements OnClickListener,
 	}
 
 	// 格式化时间显示
-	public String formatTime(int minute, int second) {
+	public static String formatTime(int minute, int second) {
 
 		String min = "";
 		String sec = "";
@@ -469,7 +459,7 @@ public class LrcActivity extends Activity implements OnClickListener,
 		}
 
 	}
-	
+
 	// 切换播放模式
 	public void switchModel() {
 		String showModel = "";
@@ -490,10 +480,10 @@ public class LrcActivity extends Activity implements OnClickListener,
 			play_model.setBackgroundResource(R.drawable.cycleall_selector);
 			break;
 		}
-		// 发送播放模式广播
-		sendPlayModel();
+		// 更新数据库
+		modelServiceDao.updateCurrentModel(currentModel);
 		// 显示播放模式
-		Toast.makeText(context, showModel, Toast.LENGTH_SHORT).show();
+		ToastUtil.toastInfo(context, showModel);
 
 	}
 
@@ -526,40 +516,21 @@ public class LrcActivity extends Activity implements OnClickListener,
 
 		intent.putExtra("msg", msg);
 		intent.putExtra("secondPause", secondPause);
-		intent.putExtra("currentIndex", currentIndex);
-		intent.putExtra("currentModel", currentModel);
 		// 启动Service
 		startService(intent);
 		isServiceOpen = true;
-	}
 
-	// 切换歌曲，发送广播，更新相关信息
-	public void sendInfo() {
-		Intent intent = new Intent();
-		intent.setAction("switchSong");
-		intent.putExtra("currentIndex", currentIndex);
-		sendBroadcast(intent);
-	}
-
-	// 记录暂停位置
-	public void recordSecondPause() {
-		Log.i("MusicDemo", "sharedPreferences");
-		editor = sharedPreferences.edit();
-		editor.putInt("secondPause", secondPause);
-		editor.commit();
 	}
 
 	/**
-	 * 点击通知栏进入，MainAty， 返回，进入SongAty，执行顺序是: Main_onPause -> Song_onCreate ->
-	 * Main_onStop -> Main_onDestory
+	 * 点击通知栏进入，LrcAty， 返回，进入SongAty，执行顺序是: Lrc_onPause -> Song_onCreate ->
+	 * Lrc_onStop -> Lrc_onDestory
 	 */
 	@Override
 	protected void onPause() {
 		if (fromNotification) {
 			MusicManager.setNotifMainToSong(true);
 			MusicManager.setPlaying(isPlaying);
-			MusicManager.setCurrentIndex(currentIndex);
-			MusicManager.setCurrentModel(currentModel);
 		} else {
 			MusicManager.setNotifMainToSong(false);
 		}
@@ -576,22 +547,10 @@ public class LrcActivity extends Activity implements OnClickListener,
 	@Override
 	protected void onDestroy() {
 
-		// 发送广播，通知SongAty更新相关信息
-		sendInfo();
 		// 注销广播接收器
 		unRegisterBroadcastRev();
 
 		super.onDestroy();
-	}
-
-	// 发送播放模式广播
-	public void sendPlayModel() {
-		Intent intent = new Intent();
-		intent.setAction("playModel");
-		intent.putExtra("currentModel", currentModel);
-		sendBroadcast(intent);
-		// 更新当前播放模式
-		MusicManager.setCurrentModel(currentModel);
 	}
 
 	// 注销广播接收器
@@ -600,11 +559,11 @@ public class LrcActivity extends Activity implements OnClickListener,
 		unregisterReceiver(ipRev);
 		unregisterReceiver(scRev);
 		unregisterReceiver(spRev);
-		unregisterReceiver(gciRev);
+		unregisterReceiver(ssRev);
 	}
 
 	// 更新UI
-	public void updateSeekBar(int position) {
+	public static void updateSeekBar(int position) {
 		lineOfTime.setProgress(position);
 		currentTime.setText(currentSecond2String(position));
 	}
@@ -764,14 +723,13 @@ public class LrcActivity extends Activity implements OnClickListener,
 		}
 	}
 
-	// 获取当前播放歌曲的下标
-	public class GetCurrentIndex extends BroadcastReceiver {
+	// 切换音乐
+	public class SwitchSongReceiver extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			currentIndex = intent.getIntExtra("currentIndex", 0);
-			// 更新界面
 			handler.sendEmptyMessage(1);
+
 		}
 
 	}
