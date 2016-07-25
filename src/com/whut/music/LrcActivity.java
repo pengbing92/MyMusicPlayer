@@ -569,7 +569,7 @@ public class LrcActivity extends Activity implements OnClickListener,
 	}
 
 	/**
-	 * SeekBar 拖动事件监听
+	 * SeekBar 进度条拖动事件监听
 	 */
 	@Override
 	public void onProgressChanged(SeekBar seekBar, int progress,
@@ -592,6 +592,7 @@ public class LrcActivity extends Activity implements OnClickListener,
 
 		MusicManager.setSeekPosition(seekPosition);
 
+		// 发送广播，service更新播放位置
 		if (isServiceOpen) {
 			sendSeekPositionToService();
 		}

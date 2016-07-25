@@ -213,7 +213,7 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 		gotoService.putExtra("secondPause", secondPause);
 		// 启动Service
 		context.startService(gotoService);
-		//isServiceOpen = true;
+		MusicManager.setServiceOpen(true);
 
 	}
 	
