@@ -14,5 +14,6 @@
     <string name="online">乐库</string>
     <string name="local">我的音乐</string>
     <string name="local_music">本地音乐</string>
+    <string name="del_Btn">删除</string>
     
 </resources>

@@ -304,6 +304,7 @@ public class SongServiceDao implements SongService {
 		return songList;
 	}
 
+	// 删除
 	@Override
 	public void deleteSongById(long m_id) {
 		// TODO Auto-generated method stub

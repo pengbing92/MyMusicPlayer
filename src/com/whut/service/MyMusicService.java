@@ -11,7 +11,6 @@ import android.content.IntentFilter;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnSeekCompleteListener;
 import android.os.IBinder;
-import android.os.Message;
 import android.util.Log;
 
 import com.whut.application.MusicManager;
@@ -19,7 +18,6 @@ import com.whut.application.MyApplication;
 import com.whut.database.entiy.Play_Model;
 import com.whut.database.service.imp.ModelServiceDao;
 import com.whut.database.service.imp.SongServiceDao;
-import com.whut.music.LrcActivity;
 import com.whut.music.SongListActivity;
 import com.whut.util.Msg_Music;
 

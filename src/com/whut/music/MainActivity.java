@@ -15,8 +15,6 @@ import android.view.Window;
 import android.widget.TextView;
 
 import com.whut.adapter.MyFragmentAdapter;
-import com.whut.database.service.imp.ModelServiceDao;
-import com.whut.database.service.imp.SongServiceDao;
 import com.whut.fragment.LocalMusicFragment;
 import com.whut.fragment.OnlineMusicFragment;
 

@@ -51,7 +51,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 	private static TextView singer;
 	private ImageView playBtn;
 	private ImageView nextBtn;
-	
+
 	// 后退按钮
 	private ImageView back_Btn;
 
@@ -100,10 +100,9 @@ public class SongListActivity extends Activity implements OnClickListener,
 	// 歌曲缩略图旋转动画
 	private ObjectAnimator objectAnimatorPre; // 先从0旋转到180
 	private ObjectAnimator objectAnimatorNext; // 再从180旋转到360，周而复始
-	
+
 	private static SongServiceDao songServiceDao;
 	private static ModelServiceDao modelServiceDao;
-	
 
 	public static int getCurrentPosition() {
 		return currentPosition;
@@ -147,7 +146,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 		setContentView(R.layout.activity_song_list);
 
 		context = this;
-		
+
 		currentSong = new Song();
 		songServiceDao = new SongServiceDao(context);
 		modelServiceDao = new ModelServiceDao(context);
@@ -217,7 +216,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 		IntentFilter cpFilter = new IntentFilter();
 		cpFilter.addAction("GetPosition");
 		registerReceiver(cpRev, cpFilter);
-		
+
 		ssRev = new SwitchSongReceiver();
 		IntentFilter ssFilter = new IntentFilter();
 		ssFilter.addAction("switchSong");
@@ -232,7 +231,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 
 	// 初始化数据
 	public void initData() {
-		
+
 		songList = songServiceDao.getAllSong();
 
 		isPlaying = MusicManager.isPlaying();
@@ -257,8 +256,8 @@ public class SongListActivity extends Activity implements OnClickListener,
 		playBtn = (ImageView) findViewById(R.id.play_btn);
 		nextBtn = (ImageView) findViewById(R.id.next_btn);
 		back_Btn = (ImageView) findViewById(R.id.back);
-//		song_progressBar = (ProgressBar) findViewById(R.id.song_progress);
-//		song_progressBar.setMax(duration);
+		// song_progressBar = (ProgressBar) findViewById(R.id.song_progress);
+		// song_progressBar.setMax(duration);
 
 		songListView.setAdapter(songListAdapter);
 		songListView.setOnItemClickListener(this);
@@ -275,7 +274,6 @@ public class SongListActivity extends Activity implements OnClickListener,
 		singer.setText(singer_str);
 		songListAdapter.setCurrentItem(currentId);
 		songListAdapter.notifyDataSetChanged();
-		
 
 		// 点击事件监听
 		bottomLayout.setOnClickListener(this);
@@ -283,11 +281,24 @@ public class SongListActivity extends Activity implements OnClickListener,
 		nextBtn.setOnClickListener(this);
 		back_Btn.setOnClickListener(this);
 
+		// 歌曲图片，旋转动画效果
+		startImageAnimation();
+
+	}
+
+	// 360度旋转动画
+	public void startImageAnimation() {
+
 		// 歌曲缩略图旋转动画效果
 		objectAnimatorPre = ObjectAnimator.ofFloat(songImage, "rotation", 0f,
 				180f);
+		objectAnimatorPre.setDuration(3000);
+		
 		objectAnimatorNext = ObjectAnimator.ofFloat(songImage, "rotation",
 				180f, 360f);
+		objectAnimatorNext.setDuration(3000);
+		
+		objectAnimatorPre.start();
 
 		// 动画状态监听
 		objectAnimatorPre.addListener(new AnimatorListenerAdapter() {
@@ -305,19 +316,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 			}
 		});
 
-		// 歌曲图片，旋转动画效果
-		startImageAnimation();
-
-	}
-
-	// 360旋转动画
-	public void startImageAnimation() {
-
-		objectAnimatorPre.setDuration(3000);
-		objectAnimatorPre.start();
-
-		objectAnimatorNext.setDuration(3000);
-
+		
 	}
 
 	@Override
@@ -385,7 +384,8 @@ public class SongListActivity extends Activity implements OnClickListener,
 	 * 
 	 * @return intent
 	 */
-	public static Intent gotoLrcAty(Context context, boolean isPlaying, boolean fromNotification) {
+	public static Intent gotoLrcAty(Context context, boolean isPlaying,
+			boolean fromNotification) {
 
 		Intent intent = new Intent(context, LrcActivity.class);
 		intent.putExtra("isPlaying", isPlaying);
@@ -426,15 +426,15 @@ public class SongListActivity extends Activity implements OnClickListener,
 
 			playNext = true;
 			msg = Msg_Music.PLAY;
-			
+
 			// 更新当前播放歌曲id
 			currentId = songList.get(position).getId();
 			// 更新数据库
 			songServiceDao.updateCurrentSong(songList.get(position));
-			
+
 			// 更新UI
 			handler.sendEmptyMessage(1);
-			
+
 			// 切换歌曲的时候，重新设置 NOT_FOUND 的初始值为false
 			LrcProcess.setNOT_FOUND(false);
 		}
@@ -508,6 +508,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			isPlaying = intent.getBooleanExtra("isplaying", false);
+			MusicManager.setPlaying(isPlaying);
 		}
 	}
 
@@ -519,16 +520,16 @@ public class SongListActivity extends Activity implements OnClickListener,
 			secondPause = intent.getIntExtra("secondPause", -1);
 		}
 	}
-	
+
 	// 切换音乐
 	public class SwitchSongReceiver extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			handler.sendEmptyMessage(1);
-			
+
 		}
-		
+
 	}
 
 	// 实时监测耳机插拔状态

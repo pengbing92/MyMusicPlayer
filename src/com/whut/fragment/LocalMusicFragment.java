@@ -62,7 +62,7 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 	private ImageView songImage;
 	private static TextView songName;
 	private static TextView singer;
-	private ImageView playBtn;
+	private static ImageView playBtn;
 	private ImageView nextBtn;
 
 	// 播放状态标志
@@ -90,6 +90,11 @@ public class LocalMusicFragment extends Fragment implements OnClickListener {
 				currentSong = songServiceDao.getCurrentSong();
 				songName.setText(currentSong.getSongName());
 				singer.setText(currentSong.getSinger());
+				if (MusicManager.isPlaying()) {
+					playBtn.setBackgroundResource(R.drawable.paubtn_selector);
+				} else {
+					playBtn.setBackgroundResource(R.drawable.playbtn_selector);
+				}
 				break;
 			default:
 				break;
