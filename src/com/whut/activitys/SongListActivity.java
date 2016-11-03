@@ -111,8 +111,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 
 	private static SongServiceDao songServiceDao;
 	private static ModelServiceDao modelServiceDao;
-	
-	
+
 	/**
 	 * 分组的布局
 	 */
@@ -147,7 +146,6 @@ public class SongListActivity extends Activity implements OnClickListener,
 	 * 上次第一个可见元素，用于滚动时记录标识。
 	 */
 	private int lastFirstVisibleItem = -1;
-	
 
 	public static int getCurrentPosition() {
 		return currentPosition;
@@ -278,7 +276,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 	public void initData() {
 
 		songList = songServiceDao.getAllSong();
-	
+
 		isPlaying = MusicManager.isPlaying();
 		currentSong = songServiceDao.getCurrentSong();
 		currentId = currentSong.getId();
@@ -288,7 +286,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 		isServiceOpen = MusicManager.isServiceOpen();
 
 		songListAdapter = new SongListAdapter(songList, context);
-		
+
 	}
 
 	public void initView() {
@@ -303,17 +301,17 @@ public class SongListActivity extends Activity implements OnClickListener,
 		back_Btn = (ImageView) findViewById(R.id.back);
 		// song_progressBar = (ProgressBar) findViewById(R.id.song_progress);
 		// song_progressBar.setMax(duration);
-		
+
 		alphabet_titleLayout = (LinearLayout) findViewById(R.id.title_alphabet);
 		alphabetTitle = (TextView) findViewById(R.id.tv_alphabet);
 		alphabetButton = (Button) findViewById(R.id.alphabetButton);
 		sectionToastLayout = (RelativeLayout) findViewById(R.id.section_toast_layout);
 		sectionToastText = (TextView) findViewById(R.id.section_toast_text);
-		
+
 		if (songList.size() > 0) {
 			setupContactsListView();
 			setAlpabetListener();
-		}	
+		}
 		songImage.setBackgroundResource(R.drawable.app_music);
 
 		if (isPlaying) {
@@ -345,11 +343,11 @@ public class SongListActivity extends Activity implements OnClickListener,
 		objectAnimatorPre = ObjectAnimator.ofFloat(songImage, "rotation", 0f,
 				180f);
 		objectAnimatorPre.setDuration(3000);
-		
+
 		objectAnimatorNext = ObjectAnimator.ofFloat(songImage, "rotation",
 				180f, 360f);
 		objectAnimatorNext.setDuration(3000);
-		
+
 		objectAnimatorPre.start();
 
 		// 动画状态监听
@@ -368,7 +366,6 @@ public class SongListActivity extends Activity implements OnClickListener,
 			}
 		});
 
-		
 	}
 
 	@Override
@@ -523,7 +520,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 		msg = Msg_Music.NEXT;
 		startMusicService();
 	}
-	
+
 	/**
 	 * 为ListView设置监听事件，根据当前的滑动状态来改变分组的显示位置，从而实现挤压动画的效果。
 	 */
@@ -536,15 +533,19 @@ public class SongListActivity extends Activity implements OnClickListener,
 			}
 
 			@Override
-			public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
-					int totalItemCount) {
-				int section = songListAdapter.getSectionForPosition(firstVisibleItem) - 'A' + 1;
-				int nextSecPosition = songListAdapter.getPositionForSection(section + 1);
+			public void onScroll(AbsListView view, int firstVisibleItem,
+					int visibleItemCount, int totalItemCount) {
+				int section = songListAdapter
+						.getSectionForPosition(firstVisibleItem) - 'A' + 1;
+				int nextSecPosition = songListAdapter
+						.getPositionForSection(section + 1);
 				if (firstVisibleItem != lastFirstVisibleItem) {
-					MarginLayoutParams params = (MarginLayoutParams) alphabet_titleLayout.getLayoutParams();
+					MarginLayoutParams params = (MarginLayoutParams) alphabet_titleLayout
+							.getLayoutParams();
 					params.topMargin = 0;
 					alphabet_titleLayout.setLayoutParams(params);
-					alphabetTitle.setText(String.valueOf(alphabet.charAt(section)));
+					alphabetTitle.setText(String.valueOf(alphabet
+							.charAt(section)));
 				}
 				if (nextSecPosition == firstVisibleItem + 1) {
 					View childView = view.getChildAt(0);
@@ -587,20 +588,20 @@ public class SongListActivity extends Activity implements OnClickListener,
 				} else if (sectionPosition > 26) {
 					sectionPosition = 26;
 				}
-				String sectionLetter = String.valueOf(alphabet.charAt(sectionPosition));
-				int position = songListAdapter.getPositionForSection(sectionPosition);
+				String sectionLetter = String.valueOf(alphabet
+						.charAt(sectionPosition));
+				int position = songListAdapter
+						.getPositionForSection(sectionLetter.charAt(0));
 				switch (event.getAction()) {
 				case MotionEvent.ACTION_DOWN:
 					alphabetButton.setBackgroundResource(R.drawable.a_z_click);
 					sectionToastLayout.setVisibility(View.VISIBLE);
 					sectionToastText.setText(sectionLetter);
 					songListView.setSelection(position);
-					// TODO 滑动字母表，listview不能跟随滚动
 					break;
 				case MotionEvent.ACTION_MOVE:
 					sectionToastText.setText(sectionLetter);
 					songListView.setSelection(position);
-					songListAdapter.notifyDataSetChanged();
 					break;
 				default:
 					alphabetButton.setBackgroundResource(R.drawable.a_z);
@@ -610,7 +611,6 @@ public class SongListActivity extends Activity implements OnClickListener,
 			}
 		});
 	}
-
 
 	/**
 	 * 定义广播接收器
