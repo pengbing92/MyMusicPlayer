@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.whut.music.MainActivity" >
+    tools:context="com.whut.activitys.MainActivity" >
 
     <LinearLayout
         android:layout_width="fill_parent"

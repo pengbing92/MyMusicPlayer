@@ -16,10 +16,10 @@ import android.graphics.BitmapFactory.Options;
 import android.provider.MediaStore;
 import android.widget.RemoteViews;
 
+import com.whut.activitys.MainActivity;
 import com.whut.database.entiy.Song;
 import com.whut.database.service.imp.SongServiceDao;
 import com.whut.fragment.LocalMusicFragment;
-import com.whut.music.MainActivity;
 import com.whut.music.R;
 import com.whut.service.MyMusicService;
 import com.whut.util.Msg_Music;

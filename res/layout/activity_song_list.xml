@@ -1,35 +1,81 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/lightgrey"
     android:orientation="vertical" >
-    
-    <include 
-        layout="@layout/topbar_songlist_aty"/>
 
+    <!-- scrollbars="none"：隐藏滚动条 -->
     <ListView
         android:id="@+id/songList"
-        android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" >
-    </ListView>
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/title_alphabet"
+        android:scrollbars="none" />
 
-    <View
+    <include
+        android:id="@+id/songlist_title"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:layout_alignParentTop="true"
+        layout="@layout/topbar_songlist_aty" />
+
+    <LinearLayout
+        android:id="@+id/title_alphabet"
         android:layout_width="fill_parent"
-        android:layout_height="1dp"
-        android:background="@color/black" />
-    
+        android:layout_height="18dip"
+        android:layout_below="@+id/songlist_title"
+        android:background="#303030" >
+
+        <TextView
+            android:id="@+id/tv_alphabet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginLeft="10dip"
+            android:textColor="#ffffff"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/alphabetButton"
+        android:layout_width="13dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_marginTop="27dp"
+        android:layout_marginBottom="51dp"
+        android:layout_marginRight="5dp"
+        android:background="@drawable/a_z" />
+
     <ProgressBar
-        android:id="@+id/song_progress" 
+        android:id="@+id/song_progress"
+        style="@android:style/Widget.ProgressBar.Horizontal"
         android:layout_width="fill_parent"
-        android:background="@color/blue"
         android:layout_height="3dp"
-        android:visibility="gone"
-        style="@android:style/Widget.ProgressBar.Horizontal" />
+        android:background="@color/blue"
+        android:visibility="gone" />
 
-    
-    <include 
-        layout="@layout/common_bottom_layout"/>
+    <include
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        layout="@layout/common_bottom_layout" />
 
-</LinearLayout>
+    <RelativeLayout
+        android:id="@+id/section_toast_layout"
+        android:layout_width="70dip"
+        android:layout_height="70dip"
+        android:layout_centerInParent="true"
+        android:background="@drawable/section_toast"
+        android:visibility="gone" >
+
+        <TextView
+            android:id="@+id/section_toast_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:textColor="#fff"
+            android:textSize="30sp" />
+    </RelativeLayout>
+
+</RelativeLayout>

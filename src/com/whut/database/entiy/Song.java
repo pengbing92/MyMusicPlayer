@@ -20,6 +20,17 @@ public class Song implements Parcelable {
 	private long size; // 文件大小
 	private String album; // 专辑图片
 	private int albumId;  // 专辑图片Id
+	
+	// 歌曲名首字母，用于歌曲列表分组展示
+	private String firstLetter;
+
+	public String getFirstLetter() {
+		return firstLetter;
+	}
+
+	public void setFirstLetter(String firstLetter) {
+		this.firstLetter = firstLetter;
+	}
 
 	public long getSize() {
 		return size;
@@ -102,6 +113,7 @@ public class Song implements Parcelable {
 		dest.writeLong(size);
 		dest.writeString(album);
 		dest.writeInt(albumId);
+		dest.writeString(firstLetter);
 	}
 
 	public static final Parcelable.Creator<Song> CREATOR = new Parcelable.Creator<Song>() {
@@ -117,6 +129,7 @@ public class Song implements Parcelable {
 			song.size = source.readLong();
 			song.album = source.readString();
 			song.albumId = source.readInt();
+			song.firstLetter = source.readString();
 			return song;
 		}
 

@@ -24,13 +24,13 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.whut.activitys.SongListActivity;
 import com.whut.application.MusicManager;
 import com.whut.database.entiy.Play_Model;
 import com.whut.database.entiy.Song;
 import com.whut.database.service.imp.ModelServiceDao;
 import com.whut.database.service.imp.SongServiceDao;
 import com.whut.music.R;
-import com.whut.music.SongListActivity;
 import com.whut.service.MyMusicService;
 import com.whut.util.Msg_Music;
 import com.whut.view.LrcProcess;

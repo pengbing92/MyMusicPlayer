@@ -1,9 +1,12 @@
 package com.whut.database.service.imp;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -13,25 +16,29 @@ import com.whut.database.MyDataBaseHelper;
 import com.whut.database.entiy.Play_Model;
 import com.whut.database.entiy.Song;
 import com.whut.database.service.SongService;
+import com.whut.util.HanZi2PinYin;
+import com.whut.util.PinyinComparator;
 
 public class SongServiceDao implements SongService {
 
 	private MyDataBaseHelper dbHelper;
 	private SQLiteDatabase db;
 	private Context context;
+	
+	// 根据首字母来排列ListView里面的数据类
+	private PinyinComparator pinyinComparator;
 
 	/**
-	 * 不加static关键字，则在调用getNextSong或者getPreSong方法时
-	 * 出现songNum的值为0的情况。
-	 * 这是因为，调用addMusicList2DB的对象跟调用另外两个方法的对象不同，
-	 * 加了static关键字，其他对象，才能共享songNum的改变。
+	 * 不加static关键字，则在调用getNextSong或者getPreSong方法时 出现songNum的值为0的情况。
+	 * 这是因为，调用addMusicList2DB的对象跟调用另外两个方法的对象不同， 加了static关键字，其他对象，才能共享songNum的改变。
 	 */
-    private static int songNum = 0; // 歌曲总数
+	private static int songNum = 0; // 歌曲总数
 
 	public SongServiceDao(Context context) {
 		dbHelper = MyDataBaseHelper.getInstance(context);
 		db = dbHelper.getWritableDatabase();
 		this.context = context;
+		pinyinComparator = new PinyinComparator();
 
 	}
 
@@ -293,6 +300,9 @@ public class SongServiceDao implements SongService {
 			song.setSize(cursor.getLong(cursor.getColumnIndex("m_size")));
 			song.setAlbum(cursor.getString(cursor.getColumnIndex("m_album")));
 			song.setAlbumId(cursor.getInt(cursor.getColumnIndex("m_album_id")));
+			// 设置首字母
+			song.setFirstLetter(getFirstLetter(song.getSongName()));
+			
 			songList.add(song);
 			Log.i("songList_inDB",
 					cursor.getString(cursor.getColumnIndex("m_name")));
@@ -300,8 +310,37 @@ public class SongServiceDao implements SongService {
 		cursor.close();
 		db.setTransactionSuccessful();
 		db.endTransaction();
+		
+		sortedSongList(songList);
 
 		return songList;
+	}
+
+	// 得到歌曲名首字母(大写)
+	@SuppressLint("DefaultLocale")
+	private String getFirstLetter(String songName) {
+
+		String firstLetter = "";
+
+		firstLetter = HanZi2PinYin.getPinYin(songName.substring(0, 1))
+				.substring(0, 1).toUpperCase();
+
+		if (firstLetter == null) {
+			firstLetter = "#";
+		}
+
+		return firstLetter;
+	}
+	
+	// 按照歌曲名首字母进行排序
+	private void sortedSongList(List<Song> songList) {
+		
+		Collections.sort(songList, pinyinComparator);
+		
+		for (int i=0;i<songList.size();i++) {
+			System.out.println(songList.get(i).getFirstLetter());
+		}
+		
 	}
 
 	// 删除

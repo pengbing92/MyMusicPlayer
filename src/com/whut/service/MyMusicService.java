@@ -13,12 +13,12 @@ import android.media.MediaPlayer.OnSeekCompleteListener;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.whut.activitys.SongListActivity;
 import com.whut.application.MusicManager;
 import com.whut.application.MyApplication;
 import com.whut.database.entiy.Play_Model;
 import com.whut.database.service.imp.ModelServiceDao;
 import com.whut.database.service.imp.SongServiceDao;
-import com.whut.music.SongListActivity;
 import com.whut.util.Msg_Music;
 
 public class MyMusicService extends Service {
