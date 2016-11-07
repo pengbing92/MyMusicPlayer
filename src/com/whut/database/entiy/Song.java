@@ -19,7 +19,7 @@ public class Song implements Parcelable {
 	private String mp3Path; // 存储路径
 	private long size; // 文件大小
 	private String album; // 专辑图片
-	private int albumId;  // 专辑图片Id
+	private long albumId;  // 专辑图片Id
 	
 	// 歌曲名首字母，用于歌曲列表分组展示
 	private String firstLetter;
@@ -90,11 +90,11 @@ public class Song implements Parcelable {
 		this.album = album;
 	}
 
-	public int getAlbumId() {
+	public long getAlbumId() {
 		return albumId;
 	}
 
-	public void setAlbumId(int albumId) {
+	public void setAlbumId(long albumId) {
 		this.albumId = albumId;
 	}
 
@@ -112,7 +112,7 @@ public class Song implements Parcelable {
 		dest.writeString(mp3Path);
 		dest.writeLong(size);
 		dest.writeString(album);
-		dest.writeInt(albumId);
+		dest.writeLong(albumId);
 		dest.writeString(firstLetter);
 	}
 
@@ -128,7 +128,7 @@ public class Song implements Parcelable {
 			song.mp3Path = source.readString();
 			song.size = source.readLong();
 			song.album = source.readString();
-			song.albumId = source.readInt();
+			song.albumId = source.readLong();
 			song.firstLetter = source.readString();
 			return song;
 		}

@@ -8,19 +8,14 @@
        
     <include layout="@layout/topbar_main_aty"/>
 
-    <com.whut.view.LrcView
-        android:id="@+id/lrcShowView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginBottom="5dp"
-        android:layout_weight="1"/>
+ 
     
     <android.support.v4.view.ViewPager
         android:id="@+id/viewPager_lrc_album"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:visibility="gone" >
+        android:layout_marginBottom="5dp" >
     </android.support.v4.view.ViewPager>
 
     <LinearLayout

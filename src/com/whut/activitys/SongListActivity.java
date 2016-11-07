@@ -48,6 +48,11 @@ import com.whut.util.Msg_Music;
 import com.whut.util.ToastUtil;
 import com.whut.view.LrcProcess;
 
+/**
+ * 歌曲列表界面
+ * @author chenfu
+ *
+ */
 public class SongListActivity extends Activity implements OnClickListener,
 		OnItemClickListener {
 
@@ -348,21 +353,29 @@ public class SongListActivity extends Activity implements OnClickListener,
 				180f, 360f);
 		objectAnimatorNext.setDuration(3000);
 
-		objectAnimatorPre.start();
+		if (isPlaying) {
+			objectAnimatorPre.start();
+		}
 
 		// 动画状态监听
 		objectAnimatorPre.addListener(new AnimatorListenerAdapter() {
 			@Override
 			public void onAnimationEnd(Animator animation) {
 				super.onAnimationEnd(animation);
-				objectAnimatorNext.start();
+				if (isPlaying) {
+					objectAnimatorNext.start();
+				}
+				
 			}
 		});
 		objectAnimatorNext.addListener(new AnimatorListenerAdapter() {
 			@Override
 			public void onAnimationEnd(Animator animation) {
 				super.onAnimationEnd(animation);
-				objectAnimatorPre.start();
+				if (isPlaying) {
+					objectAnimatorPre.start();
+				}
+				
 			}
 		});
 

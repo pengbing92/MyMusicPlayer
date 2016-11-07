@@ -23,27 +23,39 @@ public class HanZi2PinYin {
 	private static Map<Integer, String> pinyinMap = new HashMap<>();
 	private static Map<Map<Integer, Integer>, Integer> hanziMap = new HashMap<Map<Integer, Integer>, Integer>();
 
-	public static String getPinYin(String hanzi) {
+	/**
+	 * 如果是中文歌曲，则返回歌曲名第一个字的拼音
+	 * 如果是英文歌曲，返回首字母
+	 * 
+	 * @param inputStr 中文歌曲是第一个汉字，英文歌曲是首字母
+	 * @return
+	 */
+	public static String getPinYin(String inputStr) {
 		
-		String pinyin = "";
+		String returnStr = "";
 
 		byte[] inputByte;
 		try {
-			inputByte = hanzi.getBytes("gbk");
-			// IdentityHashMap，允许有相同的key，key的存储地址不同
-			Map<Integer, Integer> inputMap = new IdentityHashMap<Integer, Integer>();
-			inputMap.put(Integer.parseInt(inputByte[0] + ""),
-					Integer.parseInt(inputByte[1] + ""));
-			pinyin = pinyinMap.get(hanziMap.get(inputMap));
-			if (pinyin == null) {
-				pinyin = "error";
+			inputByte = inputStr.getBytes("gbk");
+			
+			if (inputByte.length == 1) { // 英文歌曲
+				returnStr = inputStr;
+			} else { // 中文歌曲
+				// IdentityHashMap，允许有相同的key，key的存储地址不同
+				Map<Integer, Integer> inputMap = new IdentityHashMap<Integer, Integer>();
+				inputMap.put(Integer.parseInt(inputByte[0] + ""),
+						Integer.parseInt(inputByte[1] + ""));
+				returnStr = pinyinMap.get(hanziMap.get(inputMap));
+			}
+			
+			if (returnStr == null) {
+				returnStr = "error";
 			}
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-		return pinyin;
+		return returnStr;
 	}
 
 	/**

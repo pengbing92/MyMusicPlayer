@@ -7,7 +7,6 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -16,6 +15,10 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.ViewPager;
+import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -25,20 +28,27 @@ import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 
+import com.whut.adapter.MyFragmentAdapter;
 import com.whut.application.MusicManager;
 import com.whut.database.entiy.Play_Model;
 import com.whut.database.service.imp.ModelServiceDao;
 import com.whut.database.service.imp.SongServiceDao;
-import com.whut.entiy.LrcContent;
+import com.whut.fragment.AlbumFragment;
+import com.whut.fragment.LrcFragment;
 import com.whut.music.R;
 import com.whut.service.MyMusicService;
 import com.whut.util.Msg_Music;
 import com.whut.util.ToastUtil;
 import com.whut.view.LrcProcess;
-import com.whut.view.LrcView;
 
-public class LrcActivity extends Activity implements OnClickListener,
-		OnSeekBarChangeListener {
+/**
+ * 歌词界面
+ * 
+ * @author chenfu
+ * 
+ */
+public class LrcActivity extends FragmentActivity implements OnClickListener,
+		OnSeekBarChangeListener, OnPageChangeListener {
 
 	// 上一曲，暂停/播放，下一曲 按钮
 	private ImageView pre_btn;
@@ -55,7 +65,7 @@ public class LrcActivity extends Activity implements OnClickListener,
 	private static TextView currentTime;
 
 	private static int duration = 0; // 歌曲时长
-	private static int currentPosition = 0; // 当前播放位置
+	public static int currentPosition = 0; // 当前播放位置
 
 	// 播放中断位置，默认值为-1
 	private int secondPause = -1;
@@ -68,12 +78,6 @@ public class LrcActivity extends Activity implements OnClickListener,
 
 	// 拖动位置
 	private int seekPosition = 0;
-
-	// 歌词相关
-	private static LrcView lrcView;
-	private static LrcProcess mLrcProcess;
-	private static List<LrcContent> lrcList = new ArrayList<LrcContent>();
-	private static int index = 0; // 歌词内容列表下标
 
 	// 界面顶部展示歌曲名和歌手名
 	private static TextView song_singer;
@@ -120,6 +124,13 @@ public class LrcActivity extends Activity implements OnClickListener,
 	private ModelServiceDao modelServiceDao;
 	private static SongServiceDao songServiceDao;
 
+	// 歌词与专辑图片切换
+	private LrcFragment lrcFragment;
+	private AlbumFragment albumFragment;
+	private List<Fragment> fragmentList = new ArrayList<Fragment>();
+	private MyFragmentAdapter myFragmentAdapter;
+	private ViewPager viewPager;
+
 	@SuppressLint("HandlerLeak")
 	private Handler handler = new Handler() {
 		public void handleMessage(android.os.Message msg) {
@@ -136,8 +147,6 @@ public class LrcActivity extends Activity implements OnClickListener,
 				song_name.setText(songName);
 				song_singer.setText(singer);
 				endTime.setText(getSongTime(duration));
-				// 加载歌词
-				initLrc();
 				break;
 			}
 		};
@@ -165,7 +174,8 @@ public class LrcActivity extends Activity implements OnClickListener,
 
 		currentModel = modelServiceDao.getCurrentModel();
 
-		initReceiver();
+		// 注册广播接收器
+		initBroadcastReceiver();
 
 		// 通知栏管理
 		manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -189,13 +199,11 @@ public class LrcActivity extends Activity implements OnClickListener,
 		duration = songServiceDao.getCurrentSong().getDuration();
 
 		initView();
-		// 初始化歌词显示
-		initLrc();
 
 	}
 
 	// 注册广播接收器
-	public void initReceiver() {
+	public void initBroadcastReceiver() {
 		cpRev = new CurrentPositonReceiver();
 		spRev = new SecondPauseReceiver();
 		ipRev = new IsplayingReceiver();
@@ -224,53 +232,6 @@ public class LrcActivity extends Activity implements OnClickListener,
 
 	}
 
-	public void initLrc() {
-		mLrcProcess = new LrcProcess();
-		mLrcProcess.readLRC(songName.trim());
-		lrcList = mLrcProcess.getLrcList();
-		lrcView.setmLrcList(lrcList);
-
-		// lrcView.setAnimation(AnimationUtils.loadAnimation(context, ));
-		handler.post(mRunnable);
-
-	}
-
-	Runnable mRunnable = new Runnable() {
-
-		@Override
-		public void run() {
-			lrcView.setIndex(lrcIndex());
-			lrcView.invalidate();
-			handler.postDelayed(mRunnable, 100);
-
-		}
-	};
-
-	// 取歌词list的下标
-	public static int lrcIndex() {
-
-		if (currentPosition < duration) {
-			for (int i = 0; i < lrcList.size(); i++) {
-				if (i < lrcList.size() - 1) {
-					if (currentPosition < lrcList.get(i).getLrcTime() && i == 0) {
-						index = i;
-					}
-					if (currentPosition > lrcList.get(i).getLrcTime()
-							&& currentPosition < lrcList.get(i + 1)
-									.getLrcTime()) {
-						index = i;
-					}
-				}
-				if (i == lrcList.size() - 1
-						&& currentPosition > lrcList.get(i).getLrcTime()) {
-					index = i;
-				}
-			}
-		}
-
-		return index;
-	}
-
 	public void initView() {
 
 		// 按钮
@@ -283,12 +244,20 @@ public class LrcActivity extends Activity implements OnClickListener,
 		lineOfTime = (SeekBar) findViewById(R.id.time_line);
 		endTime = (TextView) findViewById(R.id.end_time);
 		currentTime = (TextView) findViewById(R.id.current_time);
-		// 歌词显示
-		lrcView = (LrcView) findViewById(R.id.lrcShowView);
 		// 歌曲名与歌手名
 		song_name = (TextView) findViewById(R.id.name);
 		song_singer = (TextView) findViewById(R.id.singer);
 
+		/**
+		 * 歌词与专辑图片的切换
+		 */
+		initFragMents();
+		viewPager = (ViewPager) findViewById(R.id.viewPager_lrc_album);
+		viewPager.addOnPageChangeListener(this);
+		viewPager.setAdapter(myFragmentAdapter);
+		viewPager.setCurrentItem(0);
+
+		// 歌曲名和歌手
 		song_name.setText(songName);
 		song_singer.setText(singer);
 
@@ -342,6 +311,18 @@ public class LrcActivity extends Activity implements OnClickListener,
 
 	}
 
+	private void initFragMents() {
+		lrcFragment = new LrcFragment();
+		albumFragment = new AlbumFragment();
+
+		fragmentList.add(lrcFragment);
+		fragmentList.add(albumFragment);
+
+		myFragmentAdapter = new MyFragmentAdapter(getSupportFragmentManager(),
+				fragmentList);
+
+	}
+
 	// 实现顶部滚动动画效果
 	public void startTopAnimation() {
 		/**
@@ -367,7 +348,9 @@ public class LrcActivity extends Activity implements OnClickListener,
 		objectAnimatorLeft = ObjectAnimator.ofFloat(song_name, "translationX",
 				songNameX, -600f);
 		objectAnimatorLeft.setDuration(2500);
-		objectAnimatorLeft.start();
+		if (isPlaying) {
+			objectAnimatorLeft.start();
+		}
 		// 从屏幕右侧向初始位置平移
 		objectAnimatorRight = ObjectAnimator.ofFloat(song_name, "translationX",
 				600f, songNameX);
@@ -734,5 +717,26 @@ public class LrcActivity extends Activity implements OnClickListener,
 
 		}
 
+	}
+
+	/**
+	 * 滑动切换歌词与专辑图片显示
+	 */
+	@Override
+	public void onPageScrollStateChanged(int arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onPageScrolled(int arg0, float arg1, int arg2) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onPageSelected(int arg0) {
+		// TODO Auto-generated method stub
+		
 	}
 }

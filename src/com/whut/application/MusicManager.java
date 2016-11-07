@@ -1,5 +1,7 @@
 package com.whut.application;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,27 +9,37 @@ import android.app.Notification;
 import android.app.Notification.Builder;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapFactory.Options;
+import android.net.Uri;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.widget.RemoteViews;
 
 import com.whut.activitys.MainActivity;
 import com.whut.database.entiy.Song;
 import com.whut.database.service.imp.SongServiceDao;
-import com.whut.fragment.LocalMusicFragment;
+import com.whut.fragment.LocalFragment;
 import com.whut.music.R;
 import com.whut.service.MyMusicService;
 import com.whut.util.Msg_Music;
 
+/**
+ * 歌曲综合管理
+ * 
+ * @author chenfu
+ * 
+ */
 public class MusicManager {
 
 	// 点击通知栏进入LrcAty，再返回SongAty的标志
-	private static boolean notifMainToSong = false; 
+	private static boolean notifMainToSong = false;
 
 	private static boolean isPlaying = false;
 
@@ -68,7 +80,6 @@ public class MusicManager {
 		MusicManager.isPlaying = isPlaying;
 	}
 
-
 	/**
 	 * 从媒体库中获取本机上的MP3文件
 	 * 
@@ -79,34 +90,40 @@ public class MusicManager {
 
 		List<Song> songList = new ArrayList<Song>();
 
+		// 扫描媒体库中的音乐文件
 		Cursor cursor = context.getContentResolver().query(
-				MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null,
-				MediaStore.Audio.Media.DEFAULT_SORT_ORDER);
+				MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+				new String[] { MediaStore.Audio.Media.TITLE,
+						MediaStore.Audio.Media.DURATION,
+						MediaStore.Audio.Media.ARTIST,
+						MediaStore.Audio.Media._ID,
+						MediaStore.Audio.Media.DATA,
+						MediaStore.Audio.Media.ALBUM_ID,
+						MediaStore.Audio.Media.DISPLAY_NAME,
+						MediaStore.Audio.Media.SIZE,
+						MediaStore.Audio.Media.ALBUM }, null, null, null);
 
 		for (int i = 0; i < cursor.getCount(); i++) {
 			Song song = new Song();
 			cursor.moveToNext();
-			long id = cursor.getLong(cursor
-					.getColumnIndex(MediaStore.Audio.Media._ID));
-			int duration = cursor.getInt(cursor
-					.getColumnIndex(MediaStore.Audio.Media.DURATION));
-			String mp3Path = cursor.getString(cursor
-					.getColumnIndex(MediaStore.Audio.Media.DATA));
 			String songName = cursor.getString(cursor
 					.getColumnIndex(MediaStore.Audio.Media.TITLE));
+			int duration = cursor.getInt(cursor
+					.getColumnIndex(MediaStore.Audio.Media.DURATION));
 			String singer = cursor.getString(cursor
 					.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+			long id = cursor.getLong(cursor
+					.getColumnIndex(MediaStore.Audio.Media._ID));
+			String mp3Path = cursor.getString(cursor
+					.getColumnIndex(MediaStore.Audio.Media.DATA));
+			long albumId = cursor.getInt(cursor
+					.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
 			long size = cursor.getLong(cursor
 					.getColumnIndex(MediaStore.Audio.Media.SIZE));
 			String album = cursor.getString(cursor
 					.getColumnIndex(MediaStore.Audio.Media.ALBUM));
-			int albumId = cursor.getInt(cursor
-					.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
 
-			int isMusic = cursor.getInt(cursor
-					.getColumnIndex(MediaStore.Audio.Media.IS_MUSIC));
-
-			if (isMusic != 0 && size / 1000000 > 0) {
+			if (size / 1000000 > 0) {
 
 				song.setId(id);
 				song.setDuration(duration);
@@ -117,13 +134,14 @@ public class MusicManager {
 				song.setAlbum(album);
 				song.setAlbumId(albumId);
 
-				songList.add(song);
+				System.out.println(songName);
 
-				//Log.i("song_list", mp3Path + ";" + albumId);
+				songList.add(song);
 			}
 
 		}
 
+		Log.i("song_num", "媒体库中包含" + songList.size() + "首歌曲");
 		cursor.close();
 
 		return songList;
@@ -243,91 +261,12 @@ public class MusicManager {
 		manager.notify(id, notification);
 
 		// 保存数据
-		LocalMusicFragment.getEditor().putLong("currentId", currentId);
-		LocalMusicFragment.getEditor().putInt("currentModel", currentModel);
-		LocalMusicFragment.getEditor().commit();
+		LocalFragment.getEditor().putLong("currentId", currentId);
+		LocalFragment.getEditor().putInt("currentModel", currentModel);
+		LocalFragment.getEditor().commit();
 
-	}
-
-	/**
-	 * 获取默认专辑图片
-	 * 
-	 * @param context
-	 * @return
-	 */
-	public static Bitmap getDefaultArtwork(Context context) {
-		BitmapFactory.Options opts = new BitmapFactory.Options();
-		opts.inPreferredConfig = Bitmap.Config.RGB_565;
-
-		return BitmapFactory.decodeResource(context.getResources(),
-				R.drawable.songlist_default, opts);
 	}
 
 	
-	/**
-	 * 获取专辑封面位图对象
-	 * 
-	 * @param albumPath
-	 * @return 位图对象
-	 */
-	public static Bitmap getArtwork(String albumPath) {
-		Bitmap bm = null;  
-		
-		BitmapFactory.Options options = new BitmapFactory.Options();
-		options.inPreferredConfig = Bitmap.Config.RGB_565;
-		//先制定原始大小
-		options.inSampleSize = 1;
-		//只进行大小判断
-		options.inJustDecodeBounds = true;
-		//调用此方法得到options得到图片的大小
-		BitmapFactory.decodeFile(albumPath, options);
-		/** 我们的目标是在你N pixel的画面上显示。 所以需要调用computeSampleSize得到图片缩放的比例 **/
-		/** 这里的target为800是根据默认专辑图片大小决定的，800只是测试数字但是试验后发现完美的结合 **/
-		options.inSampleSize = computeSampleSize(options, 60);
-//		if(small){
-//			options.inSampleSize = computeSampleSize(options, 40);
-//		} else{
-//			options.inSampleSize = computeSampleSize(options, 600);
-//		}
-		
-		// 我们得到了缩放比例，现在开始正式读入Bitmap数据
-		options.inJustDecodeBounds = false;
-		options.inDither = false;
-		options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-		
-		bm = BitmapFactory.decodeFile(albumPath, options);
-		
-		return bm;
-	}
 
-
-	/**
-	 * 对图片进行合适的缩放
-	 * 
-	 * @param options
-	 * @param target
-	 * @return
-	 */
-	public static int computeSampleSize(Options options, int target) {
-		int w = options.outWidth;
-		int h = options.outHeight;
-		int candidateW = w / target;
-		int candidateH = h / target;
-		int candidate = Math.max(candidateW, candidateH);
-		if (candidate == 0) {
-			return 1;
-		}
-		if (candidate > 1) {
-			if ((w > target) && (w / candidate) < target) {
-				candidate -= 1;
-			}
-		}
-		if (candidate > 1) {
-			if ((h > target) && (h / candidate) < target) {
-				candidate -= 1;
-			}
-		}
-		return candidate;
-	}
-	
 }

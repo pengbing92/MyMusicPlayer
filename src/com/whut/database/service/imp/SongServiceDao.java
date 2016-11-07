@@ -1,7 +1,6 @@
 package com.whut.database.service.imp;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -24,7 +23,7 @@ public class SongServiceDao implements SongService {
 	private MyDataBaseHelper dbHelper;
 	private SQLiteDatabase db;
 	private Context context;
-	
+
 	// 根据首字母来排列ListView里面的数据类
 	private PinyinComparator pinyinComparator;
 
@@ -113,7 +112,7 @@ public class SongServiceDao implements SongService {
 	}
 
 	/**
-	 * 歌曲是否已在数据库中
+	 * 根据id查找歌曲是否已在数据库中
 	 * 
 	 * @param song
 	 * @return
@@ -302,15 +301,14 @@ public class SongServiceDao implements SongService {
 			song.setAlbumId(cursor.getInt(cursor.getColumnIndex("m_album_id")));
 			// 设置首字母
 			song.setFirstLetter(getFirstLetter(song.getSongName()));
-			
+
 			songList.add(song);
-			Log.i("songList_inDB",
-					cursor.getString(cursor.getColumnIndex("m_name")));
+
 		}
 		cursor.close();
 		db.setTransactionSuccessful();
 		db.endTransaction();
-		
+
 		sortedSongList(songList);
 
 		return songList;
@@ -331,16 +329,16 @@ public class SongServiceDao implements SongService {
 
 		return firstLetter;
 	}
-	
+
 	// 按照歌曲名首字母进行排序
 	private void sortedSongList(List<Song> songList) {
-		
+
 		Collections.sort(songList, pinyinComparator);
-		
-		for (int i=0;i<songList.size();i++) {
-			System.out.println(songList.get(i).getFirstLetter());
-		}
-		
+
+		// for (int i=0;i<songList.size();i++) {
+		// System.out.println(songList.get(i).getFirstLetter());
+		// }
+
 	}
 
 	// 删除

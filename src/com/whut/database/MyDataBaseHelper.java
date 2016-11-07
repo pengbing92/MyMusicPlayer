@@ -30,7 +30,7 @@ public class MyDataBaseHelper extends SQLiteOpenHelper {
 			+ "primary key autoincrement, play_model integer)";
 
 	public MyDataBaseHelper(Context context) {
-		super(context, "musicplayer.db", null, 2);
+		super(context, "musicplayer.db", null, 1);
 	}
 
 	public static MyDataBaseHelper getInstance(Context context) {
@@ -56,9 +56,6 @@ public class MyDataBaseHelper extends SQLiteOpenHelper {
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		switch (oldVersion) {
-		case 1:
-			// 新增当前播放模式Table
-			db.execSQL(CREATE_CURRENT_MODEL);
 		default:
 		}
 

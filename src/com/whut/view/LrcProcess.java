@@ -102,10 +102,10 @@ public class LrcProcess {
 			while ((s = br.readLine()) != null) {
 				// 替换字符
 				s = s.replace("[", "");
-				s = s.replace("]", "@");
+				s = s.replace("]", "%");
 
-				// 分离“@”字符
-				String splitLrcData[] = s.split("@");
+				// 分离“%”字符
+				String splitLrcData[] = s.split("%");
 
 				int arrayLength = splitLrcData.length;
 
@@ -163,13 +163,31 @@ public class LrcProcess {
 		timeStr = timeStr.replace(".", "@");
 
 		String timeData[] = timeStr.split("@"); // 将时间分隔成字符串数组
-
-		// 分离出分、秒并转换为整型
-		int minute = Integer.parseInt(timeData[0]);
-		int second = Integer.parseInt(timeData[1]);
+		
+		int minute = 0;
+		int second = 0;
 		int millisecond = 0;
-		if (timeData.length > 2) {
-			millisecond = Integer.parseInt(timeData[2]);
+		
+		// 分离出分、秒并转换为整型
+//		minute = Integer.parseInt(timeData[0]);
+//		second = Integer.parseInt(timeData[1]);
+//		if (timeData.length > 2) {
+//			millisecond = Integer.parseInt(timeData[2]);
+//		}
+		try {
+			// 分离出分、秒并转换为整型
+			minute = Integer.parseInt(timeData[0]);
+			second = Integer.parseInt(timeData[1]);
+			if (timeData.length > 2) {
+				millisecond = Integer.parseInt(timeData[2]);
+			}
+		} catch (NumberFormatException e) {
+			/**
+			 * 少数情况下，乱码导致不能正常解析时间，从而导致程序崩溃
+			 * 所以要捕捉异常
+			 */
+			e.printStackTrace();
+			NOT_FOUND = true;
 		}
 
 		// 计算上一行与下一行的时间转换为毫秒数
