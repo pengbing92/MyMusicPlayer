@@ -320,7 +320,7 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 		lineOfTime.setOnSeekBarChangeListener(this);
 
 		// 界面顶部歌曲名TextView,属性动画
-		startTopAnimation();
+		//startTopAnimation();
 
 	}
 

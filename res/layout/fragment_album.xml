@@ -8,8 +8,8 @@
     <ImageView 
         android:id="@+id/showAlbum"
         android:layout_width="280dp"
-        android:layout_height="300dp"
-        android:scaleType="centerCrop"
+        android:layout_height="320dp"
+        android:scaleType="fitXY"
         android:contentDescription="@string/image"/>
 
 </LinearLayout>
