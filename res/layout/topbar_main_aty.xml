@@ -2,21 +2,25 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="@dimen/common_topbar_high"
-    android:gravity="center"
-    android:minHeight="@dimen/common_topbar_high" >
+    android:layout_gravity="center_vertical"
+    android:minHeight="@dimen/common_topbar_high"
+    android:layout_marginTop="20dp" >
 
     <ImageView
         android:id="@+id/back"
         android:layout_width="wrap_content"
-        android:layout_height="fill_parent"
-        android:background="@drawable/common_icon_back_btn_selector"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="10dp"
+        android:scaleType="center"
+        android:layout_alignParentLeft="true"
+        android:layout_centerInParent="true"
+        android:background="@drawable/mainview_top_back_natural"
         android:contentDescription="@string/image" />
 
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_toRightOf="@+id/back"
-        android:layout_toLeftOf="@+id/split_line"
         android:layout_centerInParent="true"
         android:gravity="center"
         android:orientation="vertical" >
@@ -25,22 +29,27 @@
             android:id="@+id/name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="17sp" />
+            android:textSize="15sp"
+            android:textColor="@color/greenyellow"
+            android:text="@string/hello_world" />
 
         <TextView
             android:id="@+id/singer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="12sp" />
+            android:textSize="12sp"
+            android:textColor="@color/green"
+            android:text="@string/hello_world" />
     </LinearLayout>
     
     <ImageView
-        android:id="@+id/split_line" 
-        android:layout_width="1dp"
-        android:layout_height="fill_parent"
-        android:background="@color/lightgrey"
-        android:contentDescription="@string/line"
+        android:id="@+id/setting_btn" 
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
         android:layout_alignParentRight="true"
-        android:layout_marginRight="64dp" />
+        android:background="@drawable/setting"
+        android:layout_marginRight="10dp"
+        android:contentDescription="@string/image" />
 
 </RelativeLayout>

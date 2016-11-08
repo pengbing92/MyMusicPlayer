@@ -9,7 +9,9 @@
         android:id="@+id/back"
         android:layout_width="wrap_content"
         android:layout_height="fill_parent"
-        android:background="@drawable/common_icon_back_btn_selector"
+        android:layout_marginLeft="10dp"
+        android:scaleType="center"
+        android:background="@drawable/mainview_top_back_natural"
         android:contentDescription="@string/image" />
 
     <LinearLayout

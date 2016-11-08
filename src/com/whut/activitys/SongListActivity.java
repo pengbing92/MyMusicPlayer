@@ -28,6 +28,7 @@ import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -54,7 +55,7 @@ import com.whut.view.LrcProcess;
  *
  */
 public class SongListActivity extends Activity implements OnClickListener,
-		OnItemClickListener {
+		OnItemClickListener, OnItemLongClickListener {
 
 	private List<Song> songList = new ArrayList<Song>();
 	private ListView songListView;
@@ -540,6 +541,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 	private void setupContactsListView() {
 		songListView.setAdapter(songListAdapter);
 		songListView.setOnItemClickListener(this);
+		songListView.setOnItemLongClickListener(this);
 		songListView.setOnScrollListener(new OnScrollListener() {
 			@Override
 			public void onScrollStateChanged(AbsListView view, int scrollState) {
@@ -685,7 +687,11 @@ public class SongListActivity extends Activity implements OnClickListener,
 
 	}
 
-	// 实时监测耳机插拔状态
+	/**
+	 * 实时监测耳机插拔状态
+	 * @author chenfu
+	 *
+	 */
 	public class HeadSetStatus extends BroadcastReceiver {
 
 		@Override
@@ -705,9 +711,14 @@ public class SongListActivity extends Activity implements OnClickListener,
 				}
 			}
 			handler.sendMessage(msg);
-
 		}
+	}
 
+	@Override
+	public boolean onItemLongClick(AdapterView<?> parent, View view, int position,
+			long id) {
+		// TODO 长按事件
+		return false;
 	}
 
 }

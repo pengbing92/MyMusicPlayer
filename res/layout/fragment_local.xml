@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/lightgrey"
+    android:divider="@drawable/divider"
     android:orientation="vertical" >
 
     <TextView
@@ -13,11 +14,6 @@
         android:clickable="true"
         android:gravity="center"
         android:text="@string/secondFragment" />
-
-    <View
-        android:layout_width="fill_parent"
-        android:layout_height="1dp"
-        android:background="@color/black" />
 
     <include
         layout="@layout/common_bottom_layout" />

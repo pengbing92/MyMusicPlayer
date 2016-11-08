@@ -7,9 +7,9 @@
     
     <ImageView 
         android:id="@+id/showAlbum"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"    
-        android:scaleType="fitXY"
+        android:layout_width="280dp"
+        android:layout_height="300dp"
+        android:scaleType="centerCrop"
         android:contentDescription="@string/image"/>
 
 </LinearLayout>

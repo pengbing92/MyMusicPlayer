@@ -27,7 +27,8 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
-        <service android:name="com.whut.service.MyMusicService" >
+        <service 
+            android:name="com.whut.service.MyMusicService" >
         </service>
 
         <activity
