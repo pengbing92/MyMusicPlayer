@@ -1,6 +1,7 @@
 package com.whut.fragment;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import android.annotation.SuppressLint;
@@ -26,14 +27,17 @@ import android.widget.TextView;
 
 import com.whut.activitys.SongListActivity;
 import com.whut.application.MusicManager;
+import com.whut.application.MyApplication;
 import com.whut.database.entiy.Play_Model;
 import com.whut.database.entiy.Song;
 import com.whut.database.service.imp.ModelServiceDao;
 import com.whut.database.service.imp.SongServiceDao;
 import com.whut.music.R;
 import com.whut.service.MyMusicService;
+import com.whut.util.HanZi2PinYin;
 import com.whut.util.ImageUtil;
 import com.whut.util.Msg_Music;
+import com.whut.util.PinyinComparator;
 import com.whut.view.LrcProcess;
 
 public class LocalFragment extends Fragment implements OnClickListener {
@@ -116,6 +120,8 @@ public class LocalFragment extends Fragment implements OnClickListener {
 		currentSong = new Song();
 		songServiceDao = new SongServiceDao(context);
 		modelServiceDao = new ModelServiceDao(context);
+
+		pinyinComparator = new PinyinComparator();
 
 		// 通知栏管理
 		manager = (NotificationManager) context
@@ -235,8 +241,24 @@ public class LocalFragment extends Fragment implements OnClickListener {
 
 	public void initData() {
 
+		/**
+		 * 首先根据raw目录下的文本文件建立汉字与拼音的映射关系
+		 */
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				HanZi2PinYin.readTxtFile(MyApplication.getContext());
+				
+			}
+		}).start();
+		
+
+		// 扫描媒体库，获得歌曲列表
 		songList = MusicManager.getSongsFromMediaDB(context);
-		// MusicManager.getSongsFromMediaDB(context);
+
+		// 对歌曲列表排序
+		sortedSongList(songList);
 
 		// 从SharedPreferences中获取数据
 		preferences = context.getSharedPreferences("songInfo",
@@ -247,6 +269,7 @@ public class LocalFragment extends Fragment implements OnClickListener {
 		currentModel = preferences.getInt("currentModel", Play_Model.CYCLEALL);
 
 		if (songList.size() > 0) {
+			// 将歌曲列表保存到数据库中
 			songServiceDao.addMusicList2DB(songList);
 
 			// 把歌曲专辑图片存入缓存
@@ -371,6 +394,19 @@ public class LocalFragment extends Fragment implements OnClickListener {
 				handler.sendEmptyMessage(0);
 			}
 		}
+	}
+
+	// 根据歌曲名来排列ListView里面的数据类
+	private PinyinComparator pinyinComparator;
+
+	/**
+	 * 按照歌曲名进行排序
+	 * 
+	 * @param songList
+	 */
+	private void sortedSongList(List<Song> songList) {
+
+		Collections.sort(songList, pinyinComparator);
 	}
 
 }

@@ -51,8 +51,9 @@ import com.whut.view.LrcProcess;
 
 /**
  * 歌曲列表界面
+ * 
  * @author chenfu
- *
+ * 
  */
 public class SongListActivity extends Activity implements OnClickListener,
 		OnItemClickListener, OnItemLongClickListener {
@@ -199,6 +200,8 @@ public class SongListActivity extends Activity implements OnClickListener,
 		currentSong = new Song();
 		songServiceDao = new SongServiceDao(context);
 		modelServiceDao = new ModelServiceDao(context);
+		
+		
 
 		Toast.makeText(context, "Song_onCreate", Toast.LENGTH_SHORT).show();
 
@@ -366,7 +369,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 				if (isPlaying) {
 					objectAnimatorNext.start();
 				}
-				
+
 			}
 		});
 		objectAnimatorNext.addListener(new AnimatorListenerAdapter() {
@@ -376,7 +379,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 				if (isPlaying) {
 					objectAnimatorPre.start();
 				}
-				
+
 			}
 		});
 
@@ -689,8 +692,9 @@ public class SongListActivity extends Activity implements OnClickListener,
 
 	/**
 	 * 实时监测耳机插拔状态
+	 * 
 	 * @author chenfu
-	 *
+	 * 
 	 */
 	public class HeadSetStatus extends BroadcastReceiver {
 
@@ -715,10 +719,12 @@ public class SongListActivity extends Activity implements OnClickListener,
 	}
 
 	@Override
-	public boolean onItemLongClick(AdapterView<?> parent, View view, int position,
-			long id) {
+	public boolean onItemLongClick(AdapterView<?> parent, View view,
+			int position, long id) {
 		// TODO 长按事件
 		return false;
 	}
+
+	
 
 }

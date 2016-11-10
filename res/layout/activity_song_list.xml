@@ -27,7 +27,7 @@
         android:layout_width="fill_parent"
         android:layout_height="18dp"
         android:layout_below="@+id/songlist_title"
-        android:background="#303030" >
+        android:background="@color/grey" >
 
         <TextView
             android:id="@+id/tv_alphabet"

@@ -15,5 +15,7 @@ public interface SongService {
 	public Song getSongById(long m_id); // 根据m_id找到歌曲
 	public List<Song> getAllSong(); // 获取数据库中的所有歌曲
 	public void deleteSongById(long m_id); // 通过m_id删除指定的歌曲
+	public void updateSongById(long m_id); // 通过m_id更改指定歌曲的歌曲名，相应的首字母也要更改
+	
 	
 }

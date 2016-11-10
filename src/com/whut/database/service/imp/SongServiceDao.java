@@ -1,11 +1,9 @@
 package com.whut.database.service.imp;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -15,8 +13,6 @@ import com.whut.database.MyDataBaseHelper;
 import com.whut.database.entiy.Play_Model;
 import com.whut.database.entiy.Song;
 import com.whut.database.service.SongService;
-import com.whut.util.HanZi2PinYin;
-import com.whut.util.PinyinComparator;
 
 public class SongServiceDao implements SongService {
 
@@ -24,8 +20,6 @@ public class SongServiceDao implements SongService {
 	private SQLiteDatabase db;
 	private Context context;
 
-	// 根据首字母来排列ListView里面的数据类
-	private PinyinComparator pinyinComparator;
 
 	/**
 	 * 不加static关键字，则在调用getNextSong或者getPreSong方法时 出现songNum的值为0的情况。
@@ -37,31 +31,32 @@ public class SongServiceDao implements SongService {
 		dbHelper = MyDataBaseHelper.getInstance(context);
 		db = dbHelper.getWritableDatabase();
 		this.context = context;
-		pinyinComparator = new PinyinComparator();
-
 	}
 
-	// 扫描媒体库，将歌曲信息保存到数据库中
+	// 将歌曲信息保存到数据库中
 	@Override
 	public void addMusicList2DB(List<Song> songList) {
 
 		songNum = songList.size();
+
+		//this.songList = songList;
 
 		for (Song song : songList) {
 			// 数据库中已有的歌曲不用添加
 			if (!isSongInList(song)) {
 				db.beginTransaction();
 				db.execSQL(
-						"insert into music_list (m_id,m_dur,m_singer,m_name,m_path,m_size,m_album,m_album_id) "
-								+ "values(?,?,?,?,?,?,?,?)",
+						"insert into music_list (m_id,m_dur,m_singer,m_name,m_path,m_size,m_album,m_album_id,first_letter) "
+								+ "values(?,?,?,?,?,?,?,?,?)",
 						new String[] { song.getId() + "",
 								song.getDuration() + "", song.getSinger(),
 								song.getSongName(), song.getMp3Path(),
 								song.getSize() + "", song.getAlbum(),
-								song.getAlbumId() + "" });
+								song.getAlbumId() + "", song.getFirstLetter() });
+				System.out.println("first_letter: " + song.getFirstLetter());
 				db.setTransactionSuccessful();
 				db.endTransaction();
-				Log.i("msg", "歌曲列表已保存到数据库中");
+				// Log.i("msg", "歌曲列表已保存到数据库中");
 			}
 
 		}
@@ -137,33 +132,34 @@ public class SongServiceDao implements SongService {
 		Cursor cursor = db.rawQuery("select * from music_list where m_id = ?",
 				new String[] { currentSong.getId() + "" });
 
-		int currentSong_id = -1; // 当前播放歌曲的sql_id
+		int currentPos = -1; // 当前播放歌曲的sql_id
 		if (cursor.moveToFirst()) {
 			// 获取在数据库中自增的id，改变id，来获取下一曲
-			currentSong_id = cursor.getInt(cursor.getColumnIndex("id"));
-			Log.i("当前播放歌曲的sql_id:", currentSong_id + "");
+			currentPos = cursor.getInt(cursor.getColumnIndex("id"));
+			Log.i("当前播放歌曲的sql_id:", currentPos + "");
 		}
+		// int currentPos = songList.indexOf(currentSong);
 
 		int nextSong_id = -1; // 下一首歌曲的sql_id
 		switch (current_model) {
 		case Play_Model.CYCLEALL: // 列表循环
-			nextSong_id = currentSong_id + 1;
-			if (nextSong_id > songNum) { // 最后一首歌曲
+			nextSong_id = currentPos + 1;
+			if (nextSong_id >= songNum) { // 最后一首歌曲
 				Log.i("测试", "歌曲总数是：" + songNum + "");
 				Log.i("测试", "跳转到第一首歌曲");
 				nextSong_id = 1;
 			}
 			break;
 		case Play_Model.CYCLEONE: // 点击按钮，单曲循环也切换下一曲
-			nextSong_id = currentSong_id + 1;
-			if (nextSong_id > songNum) { // 最后一首歌曲
+			nextSong_id = currentPos + 1;
+			if (nextSong_id >= songNum) { // 最后一首歌曲
 				nextSong_id = 1;
 			}
 			break;
 		case Play_Model.RANDOM: // 随机播放
 			do {
 				nextSong_id = getRand_Id();
-			} while (nextSong_id == 0 || nextSong_id == currentSong_id);
+			} while (nextSong_id == 0 || nextSong_id == currentPos);
 			break;
 		default:
 		}
@@ -180,7 +176,7 @@ public class SongServiceDao implements SongService {
 	// 生成一个随机数
 	private int getRand_Id() {
 		Random random = new Random();
-		int rand_id = random.nextInt(songNum);
+		int rand_id = random.nextInt(songNum - 1);
 
 		return rand_id;
 	}
@@ -195,31 +191,33 @@ public class SongServiceDao implements SongService {
 		Cursor cursor = db.rawQuery("select * from music_list where m_id = ?",
 				new String[] { currentSong.getId() + "" });
 
-		int currentSong_id = -1; // 当前播放歌曲的sql_id
+		int currentPos = -1; // 当前播放歌曲的sql_id
 		if (cursor.moveToFirst()) {
 			// 获取在数据库中自增的id，改变id，来获取下一曲
-			currentSong_id = cursor.getInt(cursor.getColumnIndex("id"));
-			Log.i("当前播放歌曲的sql_id:", currentSong_id + "");
+			currentPos = cursor.getInt(cursor.getColumnIndex("id"));
+			Log.i("当前播放歌曲的sql_id:", currentPos + "");
 		}
+
+		// int currentPos = songList.indexOf(currentSong);
 
 		int preSong_id = -1; // 下一首歌曲的sql_id
 		switch (current_model) {
 		case Play_Model.CYCLEALL: // 列表循环
-			preSong_id = currentSong_id - 1;
+			preSong_id = currentPos - 1;
 			if (preSong_id < 1) { // 第一首歌曲
-				preSong_id = songNum;
+				preSong_id = songNum - 1;
 			}
 			break;
 		case Play_Model.CYCLEONE: // 点击按钮，单曲循环也切换上一曲
-			preSong_id = currentSong_id - 1;
+			preSong_id = currentPos - 1;
 			if (preSong_id < 1) { // 第一首歌曲
-				preSong_id = songNum;
+				preSong_id = songNum - 1;
 			}
 			break;
 		case Play_Model.RANDOM: // 随机播放
 			do {
 				preSong_id = getRand_Id();
-			} while (preSong_id == 0 || preSong_id == currentSong_id);
+			} while (preSong_id == 0 || preSong_id == currentPos);
 			break;
 		default:
 		}
@@ -284,6 +282,9 @@ public class SongServiceDao implements SongService {
 		return getSongByCursor(cursor);
 	}
 
+	/**
+	 * 读取数据库中保存的歌曲列表
+	 */
 	@Override
 	public List<Song> getAllSong() {
 		List<Song> songList = new ArrayList<Song>();
@@ -299,8 +300,7 @@ public class SongServiceDao implements SongService {
 			song.setSize(cursor.getLong(cursor.getColumnIndex("m_size")));
 			song.setAlbum(cursor.getString(cursor.getColumnIndex("m_album")));
 			song.setAlbumId(cursor.getInt(cursor.getColumnIndex("m_album_id")));
-			// 设置首字母
-			song.setFirstLetter(getFirstLetter(song.getSongName()));
+			song.setFirstLetter(cursor.getString(cursor.getColumnIndex("first_letter")));
 
 			songList.add(song);
 
@@ -309,36 +309,7 @@ public class SongServiceDao implements SongService {
 		db.setTransactionSuccessful();
 		db.endTransaction();
 
-		sortedSongList(songList);
-
 		return songList;
-	}
-
-	// 得到歌曲名首字母(大写)
-	@SuppressLint("DefaultLocale")
-	private String getFirstLetter(String songName) {
-
-		String firstLetter = "";
-
-		firstLetter = HanZi2PinYin.getPinYin(songName.substring(0, 1))
-				.substring(0, 1).toUpperCase();
-
-		if (firstLetter == null) {
-			firstLetter = "#";
-		}
-
-		return firstLetter;
-	}
-
-	// 按照歌曲名首字母进行排序
-	private void sortedSongList(List<Song> songList) {
-
-		Collections.sort(songList, pinyinComparator);
-
-		// for (int i=0;i<songList.size();i++) {
-		// System.out.println(songList.get(i).getFirstLetter());
-		// }
-
 	}
 
 	// 删除
@@ -348,4 +319,11 @@ public class SongServiceDao implements SongService {
 
 	}
 
+	// 改歌曲名
+	@Override
+	public void updateSongById(long m_id) {
+		// TODO Auto-generated method stub
+		
+	}
+	
 }

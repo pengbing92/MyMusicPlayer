@@ -3,6 +3,7 @@ package com.whut.application;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.Notification.Builder;
 import android.app.NotificationManager;
@@ -20,6 +21,7 @@ import com.whut.database.service.imp.SongServiceDao;
 import com.whut.fragment.LocalFragment;
 import com.whut.music.R;
 import com.whut.service.MyMusicService;
+import com.whut.util.HanZi2PinYin;
 import com.whut.util.Msg_Music;
 
 /**
@@ -39,7 +41,6 @@ public class MusicManager {
 
 	private static boolean isServiceOpen = true;
 
-	/******************** get and set ****************************************/
 	public static boolean isServiceOpen() {
 		return isServiceOpen;
 	}
@@ -126,7 +127,10 @@ public class MusicManager {
 				song.setAlbum(album);
 				song.setAlbumId(albumId);
 
-				System.out.println(songName);
+				// 设置首字母
+				song.setFirstLetter(getFirstLetter(song.getSongName()));
+
+				// System.out.println(songName);
 
 				songList.add(song);
 			}
@@ -259,6 +263,20 @@ public class MusicManager {
 
 	}
 
-	
+	// 得到歌曲名首字母(大写)
+	@SuppressLint("DefaultLocale")
+	private static String getFirstLetter(String songName) {
+
+		String firstLetter = "";
+
+		firstLetter = HanZi2PinYin.getPinYin(songName.substring(0, 1))
+				.substring(0, 1).toUpperCase();
+
+		if (firstLetter == null) {
+			firstLetter = "#";
+		}
+
+		return firstLetter;
+	}
 
 }

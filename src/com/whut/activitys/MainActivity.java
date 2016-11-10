@@ -18,12 +18,12 @@ import com.whut.adapter.MyFragmentAdapter;
 import com.whut.fragment.LocalFragment;
 import com.whut.fragment.OnlineFragment;
 import com.whut.music.R;
-import com.whut.util.HanZi2PinYin;
 
 /**
  * 程序主界面
+ * 
  * @author chenfu
- *
+ * 
  */
 public class MainActivity extends FragmentActivity implements OnClickListener,
 		OnPageChangeListener {
@@ -46,17 +46,13 @@ public class MainActivity extends FragmentActivity implements OnClickListener,
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		
-		/**
-		 * 根据raw目录下的文本文件建立汉字与拼音的映射关系
-		 */
-		HanZi2PinYin.readTxtFile();
-		
+
 		setContentView(R.layout.activity_main);
+
 
 		// 初始化组件
 		initView();
-
+		
 	}
 
 	public void initFragments() {
@@ -114,7 +110,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener,
 		}
 
 	}
-	
+
 	@Override
 	protected void onRestart() {
 		Log.i("MainAty", "onRestart");
@@ -135,11 +131,10 @@ public class MainActivity extends FragmentActivity implements OnClickListener,
 		super.onDestroy();
 	}
 
+	
+
 	/**
-	 * state滑动中的状态 有三种状态（0，1，2） 
-	 * 1：正在滑动 
-	 * 2：滑动完毕 
-	 * 0：什么都没做。
+	 * state滑动中的状态 有三种状态（0，1，2） 1：正在滑动 2：滑动完毕 0：什么都没做。
 	 */
 	@Override
 	public void onPageScrollStateChanged(int state) {
@@ -147,9 +142,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener,
 	}
 
 	/**
-	 * position :当前页面，即你点击滑动的页面 
-	 * offset:当前页面偏移的百分比 
-	 * offsetPixels:当前页面偏移的像素位置
+	 * position :当前页面，即你点击滑动的页面 offset:当前页面偏移的百分比 offsetPixels:当前页面偏移的像素位置
 	 */
 	@Override
 	public void onPageScrolled(int position, float offset, int offsetPixels) {
