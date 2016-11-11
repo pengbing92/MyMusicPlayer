@@ -27,8 +27,7 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
-        <service 
-            android:name="com.whut.service.MyMusicService" >
+        <service android:name="com.whut.service.MyMusicService" >
         </service>
 
         <activity
@@ -38,12 +37,20 @@
         <activity
             android:name="com.whut.activitys.SongListActivity"
             android:label="@string/app_name" >
-           
         </activity>
         <activity
             android:name="com.whut.activitys.MainActivity"
             android:label="@string/app_name" >
-             <intent-filter>
+        </activity>
+        <activity
+            android:name="com.whut.activitys.SearchActivity"
+            android:label="@string/title_activity_search" >
+        </activity>
+        <activity
+            android:theme="@android:style/Theme.Translucent"
+            android:name="com.whut.activitys.GuideActivity"
+            android:label="@string/title_activity_guide" >
+            <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />

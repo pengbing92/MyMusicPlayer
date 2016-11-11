@@ -241,17 +241,7 @@ public class LocalFragment extends Fragment implements OnClickListener {
 
 	public void initData() {
 
-		/**
-		 * 首先根据raw目录下的文本文件建立汉字与拼音的映射关系
-		 */
-		new Thread(new Runnable() {
-			
-			@Override
-			public void run() {
-				HanZi2PinYin.readTxtFile(MyApplication.getContext());
-				
-			}
-		}).start();
+		
 		
 
 		// 扫描媒体库，获得歌曲列表

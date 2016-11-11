@@ -134,8 +134,8 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 	private MyFragmentAdapter myFragmentAdapter;
 	private ViewPager viewPager;
 	
-	// 右上角设置按钮
-	private ImageView settingBtn;
+	// 右上角分享按钮
+	private ImageView shareBtn;
 
 	@SuppressLint("HandlerLeak")
 	private Handler handler = new Handler() {
@@ -257,8 +257,8 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 		// 歌曲名与歌手名
 		song_name = (TextView) findViewById(R.id.name);
 		song_singer = (TextView) findViewById(R.id.singer);
-		// 设置按钮
-		settingBtn = (ImageView) findViewById(R.id.setting_btn);
+		// 分享按钮
+		shareBtn = (ImageView) findViewById(R.id.shareBtn);
 
 		/**
 		 * 歌词与专辑图片的切换
@@ -314,7 +314,7 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 		next_btn.setOnClickListener(this);
 		play_model.setOnClickListener(this);
 		back_Btn.setOnClickListener(this);
-		settingBtn.setOnClickListener(this);
+		shareBtn.setOnClickListener(this);
 
 		// 进度条拖动事件监听
 		lineOfTime.setOnSeekBarChangeListener(this);
@@ -453,8 +453,8 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 			// 结束当前Aty，返回上一个Aty
 			finish();
 			break;
-		case R.id.setting_btn:
-			// 菜单
+		case R.id.shareBtn:
+			// 分享
 			
 		}
 

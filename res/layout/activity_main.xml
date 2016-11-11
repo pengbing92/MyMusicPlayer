@@ -1,63 +1,88 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context="com.whut.activitys.MainActivity" >
 
-    <LinearLayout
+    <RelativeLayout
+        android:id="@+id/topBar"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/red"
-        android:orientation="vertical" >
+        android:layout_height="@dimen/common_topbar_high"
+        android:layout_alignParentTop="true"
+        android:background="@color/red" >
 
-        <LinearLayout
-            android:layout_width="fill_parent"
+        <TextView
+            android:id="@+id/onlineTab"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="5dp" >
-
-            <TextView
-                android:id="@+id/onlineTab"
-                android:layout_width="wrap_content"
-                android:layout_height="fill_parent"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="20dp"
-                android:gravity="center"
-                android:text="@string/online"
-                android:textColor="@color/white"
-                android:textSize="25sp" />
-
-            <TextView
-                android:id="@+id/localTab"
-                android:layout_width="wrap_content"
-                android:layout_height="fill_parent"
-                android:gravity="center"
-                android:text="@string/local"
-                android:textColor="@color/white"
-                android:textSize="25sp" />
-        </LinearLayout>
+            android:layout_centerInParent="true"
+            android:layout_marginLeft="15dp"
+            android:gravity="center"
+            android:text="@string/online"
+            android:textColor="@color/white"
+            android:layout_alignParentLeft="true"
+            android:textSize="20sp" />
 
         <View
             android:id="@+id/tab_selected_0"
-            android:layout_width="75dp"
+            android:layout_width="wrap_content"
             android:layout_height="5dp"
-            android:layout_marginLeft="5dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignLeft="@+id/onlineTab"
+            android:layout_alignRight="@+id/onlineTab"
             android:background="@color/orange" />
-        
+
+        <TextView
+            android:id="@+id/localTab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginLeft="20dp"
+            android:layout_alignTop="@+id/onlineTab"
+            android:layout_toRightOf="@+id/onlineTab"
+            android:gravity="center"
+            android:text="@string/local"
+            android:textColor="@color/white"
+            android:textSize="20sp" />
+
         <View
             android:id="@+id/tab_selected_1"
-            android:layout_width="130dp"
+            android:layout_width="wrap_content"
             android:layout_height="5dp"
-            android:layout_marginLeft="80dp"
-            android:background="@color/orange"
-            android:visibility="gone" />
-    </LinearLayout>
+            android:layout_alignLeft="@+id/localTab"
+            android:layout_alignRight="@+id/localTab"
+            android:layout_alignParentBottom="true"
+            android:visibility="gone"
+            android:background="@color/orange" />
+
+        <ImageView
+            android:id="@+id/searchBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_toLeftOf="@+id/setting"
+            android:layout_marginRight="15dp"
+            android:contentDescription="@string/image"
+            android:background="@drawable/ic_action_search" />
+
+        <ImageView
+            android:id="@+id/setting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginRight="10dp"
+            android:contentDescription="@string/image"
+            android:background="@drawable/ic_action_settings"
+            android:layout_alignParentRight="true" />
+    </RelativeLayout>
 
     <android.support.v4.view.ViewPager
         android:id="@+id/viewPager"
         android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" >
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_below="@+id/topBar" >
     </android.support.v4.view.ViewPager>
 
-</LinearLayout>
+</RelativeLayout>

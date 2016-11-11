@@ -15,5 +15,10 @@
     <string name="local">我的音乐</string>
     <string name="local_music">本地音乐</string>
     <string name="del_Btn">删除</string>
-    
+    <string name="title_activity_search">SearchActivity</string>
+    <string name="search_hint">请在此输入</string>
+    <string name="search_btn">确定</string>
+    <string name="title_activity_guide">GuideActivity</string>
+    <string name="enterApp">进入</string>
+
 </resources>

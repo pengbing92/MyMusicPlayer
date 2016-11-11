@@ -119,8 +119,6 @@ public class SongListAdapter extends BaseAdapter implements SectionIndexer {
 			viewHolder.albumImage.setImageBitmap(defaultAlbum);
 		}
 		
-		//viewHolder.del_Btn.setOnTouchListener(this);
-		
 
 		// 根据传入的下标，将相应的item的字体显示为红色
 		if (currentItem == song.getId()) {

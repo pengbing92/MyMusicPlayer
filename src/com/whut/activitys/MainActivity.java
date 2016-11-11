@@ -3,6 +3,7 @@ package com.whut.activitys;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -12,6 +13,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.whut.adapter.MyFragmentAdapter;
@@ -41,6 +43,10 @@ public class MainActivity extends FragmentActivity implements OnClickListener,
 	// 底部导航条
 	private View tab_online;
 	private View tab_local;
+	
+	// 按钮
+	private ImageView searchBtn;
+	private ImageView settingBtn;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +54,6 @@ public class MainActivity extends FragmentActivity implements OnClickListener,
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 
 		setContentView(R.layout.activity_main);
-
 
 		// 初始化组件
 		initView();
@@ -74,9 +79,16 @@ public class MainActivity extends FragmentActivity implements OnClickListener,
 		// Tab标签
 		onlineTab = (TextView) findViewById(R.id.onlineTab);
 		localTab = (TextView) findViewById(R.id.localTab);
+		
+		// 按钮
+		searchBtn = (ImageView) findViewById(R.id.searchBtn);
+		settingBtn = (ImageView) findViewById(R.id.setting);
 
+		// 点击事件监听
 		onlineTab.setOnClickListener(this);
 		localTab.setOnClickListener(this);
+		searchBtn.setOnClickListener(this);
+		settingBtn.setOnClickListener(this);
 
 		initFragments();
 
@@ -104,6 +116,13 @@ public class MainActivity extends FragmentActivity implements OnClickListener,
 		case R.id.localTab:
 			viewPager.setCurrentItem(1);
 			break;
+		case R.id.searchBtn:
+			Intent intent = new Intent(this, SearchActivity.class);
+			startActivity(intent);
+			break;
+		case R.id.setting:
+			// TODO
+			break;
 
 		default:
 			break;
@@ -121,13 +140,13 @@ public class MainActivity extends FragmentActivity implements OnClickListener,
 
 	@Override
 	protected void onStop() {
-		Log.i("CFAty", "onStop");
+		Log.i("MainAty", "onStop");
 		super.onStop();
 	}
 
 	@Override
 	protected void onDestroy() {
-		Log.i("CFAty", "onDestory");
+		Log.i("MainAty", "onDestory");
 		super.onDestroy();
 	}
 

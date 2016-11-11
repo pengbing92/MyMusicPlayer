@@ -243,7 +243,6 @@ public class MusicManager {
 		 */
 		if (MusicManager.isPlaying()) {
 			builder.setOngoing(true);
-			// notification.flags = Notification.FLAG_ONGOING_EVENT;
 			builder.setAutoCancel(false);
 		} else {
 			builder.setOngoing(false);
