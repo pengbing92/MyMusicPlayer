@@ -16,7 +16,6 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Shader.TileMode;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -56,7 +55,7 @@ public class AlbumFragment extends Fragment {
 	};
 
 	@Override
-	public void onCreate(@Nullable Bundle savedInstanceState) {
+	public void onCreate( Bundle savedInstanceState) {
 		context = getActivity();
 		currentSong = new Song();
 		imageUtil = ImageUtil.getInstance(context);
@@ -74,15 +73,14 @@ public class AlbumFragment extends Fragment {
 	}
 
 	@Override
-	@Nullable
 	public View onCreateView(LayoutInflater inflater,
-			@Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+			 ViewGroup container,  Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_album, container, false);
 		return view;
 	}
 
 	@Override
-	public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+	public void onActivityCreated( Bundle savedInstanceState) {
 		imageView = (ImageView) getActivity().findViewById(R.id.showAlbum);
 		initAlbum();
 		super.onActivityCreated(savedInstanceState);

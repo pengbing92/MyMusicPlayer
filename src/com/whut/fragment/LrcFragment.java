@@ -10,16 +10,15 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.whut.activitys.LrcActivity;
 import com.whut.database.entiy.Song;
 import com.whut.database.service.imp.SongServiceDao;
 import com.whut.entiy.LrcContent;
+import com.whut.music.LrcActivity;
 import com.whut.music.R;
 import com.whut.view.LrcProcess;
 import com.whut.view.LrcView;
@@ -34,12 +33,12 @@ public class LrcFragment extends Fragment {
 	private SongServiceDao songServiceDao;
 	private Song lastSong; // 上一次播放的歌曲
 	private Song currentSong;
-	
+
 	private boolean firstShow = true; // 第一次显示
 
 	private Context context;
 	private MyBroadcastReceiver myreceiver;
-	
+
 	@SuppressLint("HandlerLeak")
 	private Handler handler = new Handler() {
 		public void handleMessage(android.os.Message msg) {
@@ -56,16 +55,16 @@ public class LrcFragment extends Fragment {
 	};
 
 	@Override
-	public void onCreate(@Nullable Bundle savedInstanceState) {
+	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		currentSong = new Song();
 		lastSong = new Song();
-		
+
 		context = getActivity();
 		songServiceDao = new SongServiceDao(context);
 		// 初始化广播接收器
 		initBroadcastReceiver();
-		
+
 		initData();
 	}
 
@@ -78,7 +77,7 @@ public class LrcFragment extends Fragment {
 	}
 
 	@Override
-	public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 		lrcView = (LrcView) getActivity().findViewById(R.id.lrcShowView);
 		// 加载歌词
@@ -102,24 +101,24 @@ public class LrcFragment extends Fragment {
 	}
 
 	public void initLrc() {
-		
+
 		if (firstShow) {
 			mLrcProcess = new LrcProcess();
-			mLrcProcess.readLRC(currentSong.getSongName().trim());
+			mLrcProcess.readLRC(currentSong.getSongName().trim(), currentSong.getSinger().trim());
 			lrcList = mLrcProcess.getLrcList();
 			lrcView.setmLrcList(lrcList);
 			handler.post(mRunnable);
 		} else {
 			if (lastSong.getId() != currentSong.getId()) {
 				mLrcProcess = new LrcProcess();
-				mLrcProcess.readLRC(currentSong.getSongName().trim());
+				mLrcProcess.readLRC(currentSong.getSongName().trim(), currentSong.getSinger().trim());
 				lrcList = mLrcProcess.getLrcList();
 				lrcView.setmLrcList(lrcList);
 				handler.post(mRunnable);
 				lastSong = currentSong;
 			}
 		}
-		
+
 		firstShow = false;
 
 	}

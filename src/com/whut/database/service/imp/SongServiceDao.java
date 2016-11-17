@@ -20,6 +20,7 @@ public class SongServiceDao implements SongService {
 	private SQLiteDatabase db;
 	private Context context;
 
+	private static final String TAG = SongServiceDao.class.getName();
 
 	/**
 	 * 不加static关键字，则在调用getNextSong或者getPreSong方法时 出现songNum的值为0的情况。
@@ -31,35 +32,47 @@ public class SongServiceDao implements SongService {
 		dbHelper = MyDataBaseHelper.getInstance(context);
 		db = dbHelper.getWritableDatabase();
 		this.context = context;
+
 	}
 
-	// 将歌曲信息保存到数据库中
+	/**
+	 * 将歌曲信息保存到数据库中： 当媒体库中新增了歌曲或者删除了歌曲或者歌曲名改变了，不能排序。 此处采用的办法是，先删除表，再重新建表
+	 */
 	@Override
 	public void addMusicList2DB(List<Song> songList) {
 
 		songNum = songList.size();
 
-		//this.songList = songList;
+		Log.i(TAG, "songNum is " + songNum);
 
-		for (Song song : songList) {
-			// 数据库中已有的歌曲不用添加
-			if (!isSongInList(song)) {
-				db.beginTransaction();
-				db.execSQL(
-						"insert into music_list (m_id,m_dur,m_singer,m_name,m_path,m_size,m_album,m_album_id,first_letter) "
-								+ "values(?,?,?,?,?,?,?,?,?)",
-						new String[] { song.getId() + "",
-								song.getDuration() + "", song.getSinger(),
-								song.getSongName(), song.getMp3Path(),
-								song.getSize() + "", song.getAlbum(),
-								song.getAlbumId() + "", song.getFirstLetter() });
-				System.out.println("first_letter: " + song.getFirstLetter());
-				db.setTransactionSuccessful();
-				db.endTransaction();
-				// Log.i("msg", "歌曲列表已保存到数据库中");
+		if (isMusicListTbEmpty()) { // 第一次启动程序
+			Log.i(TAG, "第一次启动应用");
+			insert2MusicList(songList);
+		} else {
+			if (songList.size() == getMusicCountInDB()) {
+				// TODO 检查歌曲名是否更改
+				for (Song song : songList) {
+					if (!isSongInDB(song)) {
+						/**
+						 * 媒体库中的歌曲名已更改
+						 * (经测试，即使修改了文件名，媒体库中的歌曲名并未修改，其他播放器也是一样的)
+						 */
+						Log.i(TAG, song.getSongName().split("\\(")[0]
+								+ "不在数据库中");
+						db.execSQL("drop table if exists music_list");
+						db.execSQL(MyDataBaseHelper.CREATE_MUSIC_LIST);
+						insert2MusicList(songList);
+						break;
+					}
+				}
+			} else { // 媒体库中新增或者删除了歌曲，都要更新表
+				db.execSQL("drop table if exists music_list");
+				db.execSQL(MyDataBaseHelper.CREATE_MUSIC_LIST);
+				insert2MusicList(songList);
 			}
 
 		}
+
 	}
 
 	/**
@@ -83,16 +96,6 @@ public class SongServiceDao implements SongService {
 
 	}
 
-	// 判断当前播放歌曲表是否为空
-	private boolean isCurrentSongTbEmpty() {
-		Cursor cursor = db.rawQuery("select * from current_song", null);
-		if (cursor == null || cursor.getCount() == 0) {
-			return true;
-		}
-		cursor.close();
-		return false;
-	}
-
 	// 获取当前播放的歌曲
 	@Override
 	public Song getCurrentSong() {
@@ -107,22 +110,28 @@ public class SongServiceDao implements SongService {
 	}
 
 	/**
-	 * 根据id查找歌曲是否已在数据库中
+	 * 根据id查找歌曲是否已在数据库中，且歌曲名是否更改
 	 * 
 	 * @param song
 	 * @return
 	 */
-	public boolean isSongInList(Song song) {
+	public boolean isSongInDB(Song song) {
 		Cursor cursor = db.rawQuery("select * from music_list where m_id = ?",
 				new String[] { song.getId() + "" });
 		while (cursor.moveToNext()) {
-			return true;
+			String nameInDB = cursor.getString(cursor.getColumnIndex("m_name"));
+			if (song.getSongName().equals(nameInDB)) { // 歌曲名未更改
+				return true;
+			}
 		}
 		cursor.close();
 		return false;
+
 	}
 
-	// 获取下一曲
+	/**
+	 * 获取下一曲
+	 */
 	@Override
 	public Song getNextSong(Song currentSong) {
 		ModelServiceDao modelServiceDao = new ModelServiceDao(context);
@@ -144,7 +153,7 @@ public class SongServiceDao implements SongService {
 		switch (current_model) {
 		case Play_Model.CYCLEALL: // 列表循环
 			nextSong_id = currentPos + 1;
-			if (nextSong_id >= songNum) { // 最后一首歌曲
+			if (nextSong_id > songNum) { // 最后一首歌曲
 				Log.i("测试", "歌曲总数是：" + songNum + "");
 				Log.i("测试", "跳转到第一首歌曲");
 				nextSong_id = 1;
@@ -152,7 +161,7 @@ public class SongServiceDao implements SongService {
 			break;
 		case Play_Model.CYCLEONE: // 点击按钮，单曲循环也切换下一曲
 			nextSong_id = currentPos + 1;
-			if (nextSong_id >= songNum) { // 最后一首歌曲
+			if (nextSong_id > songNum) { // 最后一首歌曲
 				nextSong_id = 1;
 			}
 			break;
@@ -173,15 +182,9 @@ public class SongServiceDao implements SongService {
 		return getSongByCursor(cursor);
 	}
 
-	// 生成一个随机数
-	private int getRand_Id() {
-		Random random = new Random();
-		int rand_id = random.nextInt(songNum - 1);
-
-		return rand_id;
-	}
-
-	// 获取上一曲
+	/**
+	 * 获取上一曲
+	 */
 	@Override
 	public Song getPreSong(Song currentSong) {
 		ModelServiceDao modelServiceDao = new ModelServiceDao(context);
@@ -205,13 +208,13 @@ public class SongServiceDao implements SongService {
 		case Play_Model.CYCLEALL: // 列表循环
 			preSong_id = currentPos - 1;
 			if (preSong_id < 1) { // 第一首歌曲
-				preSong_id = songNum - 1;
+				preSong_id = songNum;
 			}
 			break;
 		case Play_Model.CYCLEONE: // 点击按钮，单曲循环也切换上一曲
 			preSong_id = currentPos - 1;
 			if (preSong_id < 1) { // 第一首歌曲
-				preSong_id = songNum - 1;
+				preSong_id = songNum;
 			}
 			break;
 		case Play_Model.RANDOM: // 随机播放
@@ -228,6 +231,14 @@ public class SongServiceDao implements SongService {
 		db.endTransaction();
 
 		return getSongByCursor(cursor);
+	}
+
+	// 生成一个随机数
+	private int getRand_Id() {
+		Random random = new Random();
+		int rand_id = random.nextInt(songNum + 1);
+
+		return rand_id;
 	}
 
 	@SuppressWarnings("null")
@@ -253,6 +264,35 @@ public class SongServiceDao implements SongService {
 		}
 		cursor.close();
 		return song;
+	}
+
+	private List<Song> getSongListByCursor(Cursor cursor) {
+		List<Song> songList = new ArrayList<Song>();
+
+		if (cursor != null && cursor.getCount() > 0) {
+			while (cursor.moveToNext()) {
+				Song song = new Song();
+				song.setId(cursor.getLong(cursor.getColumnIndex("m_id")));
+				song.setDuration(cursor.getInt(cursor.getColumnIndex("m_dur")));
+				song.setSinger(cursor.getString(cursor
+						.getColumnIndex("m_singer")));
+				song.setSongName(cursor.getString(cursor
+						.getColumnIndex("m_name")));
+				song.setMp3Path(cursor.getString(cursor
+						.getColumnIndex("m_path")));
+				song.setSize(cursor.getLong(cursor.getColumnIndex("m_size")));
+				song.setAlbum(cursor.getString(cursor.getColumnIndex("m_album")));
+				song.setAlbumId(cursor.getInt(cursor
+						.getColumnIndex("m_album_id")));
+				song.setFirstLetter(cursor.getString(cursor
+						.getColumnIndex("first_letter")));
+
+				songList.add(song);
+
+			}
+		}
+		cursor.close();
+		return songList;
 	}
 
 	@Override
@@ -300,7 +340,8 @@ public class SongServiceDao implements SongService {
 			song.setSize(cursor.getLong(cursor.getColumnIndex("m_size")));
 			song.setAlbum(cursor.getString(cursor.getColumnIndex("m_album")));
 			song.setAlbumId(cursor.getInt(cursor.getColumnIndex("m_album_id")));
-			song.setFirstLetter(cursor.getString(cursor.getColumnIndex("first_letter")));
+			song.setFirstLetter(cursor.getString(cursor
+					.getColumnIndex("first_letter")));
 
 			songList.add(song);
 
@@ -312,18 +353,83 @@ public class SongServiceDao implements SongService {
 		return songList;
 	}
 
-	// 删除
+	// 根据歌曲名检索歌曲
 	@Override
-	public void deleteSongById(long m_id) {
-		// TODO Auto-generated method stub
+	public Song getSongByName(String songName) {
+		Song song = new Song();
+
+		Cursor cursor = db.query("music_list", null, "m_name = ?",
+				new String[] { songName }, null, null, null);
+		song = getSongByCursor(cursor);
+
+		return song;
 
 	}
 
-	// 改歌曲名
+	/**
+	 * 模糊查询 查询歌曲名或者歌手名中包含关键字的记录
+	 */
 	@Override
-	public void updateSongById(long m_id) {
-		// TODO Auto-generated method stub
-		
+	public List<Song> getSongs(String str) {
+		List<Song> songList = new ArrayList<Song>();
+		Cursor cursor = db.query("music_list", null,
+				"m_name like ? or m_singer like ?", new String[] {
+						"%" + str + "%", "%" + str + "%" }, null, null, null);
+		songList = getSongListByCursor(cursor);
+		Log.i(TAG, "模糊查询结果记录有" + songList.size() + "条");
+		return songList;
 	}
-	
+
+	// 判断当前播放歌曲表是否为空
+	@Override
+	public boolean isCurrentSongTbEmpty() {
+		Cursor cursor = db.rawQuery("select * from current_song", null);
+		if (cursor == null || cursor.getCount() == 0) {
+			return true;
+		}
+		cursor.close();
+		return false;
+	}
+
+	// 判断歌曲表是否为空
+	@Override
+	public boolean isMusicListTbEmpty() {
+		if (getMusicCountInDB() > 0) {
+			return false;
+		}
+		return true;
+	}
+
+	// 添加记录到歌曲表
+	@Override
+	public void insert2MusicList(List<Song> songList) {
+		for (Song song : songList) {
+			db.beginTransaction();
+			db.execSQL(
+					"insert into music_list (m_id,m_dur,m_singer,m_name,m_path,m_size,m_album,m_album_id,first_letter) "
+							+ "values(?,?,?,?,?,?,?,?,?)",
+					new String[] { song.getId() + "", song.getDuration() + "",
+							song.getSinger(), song.getSongName(),
+							song.getMp3Path(), song.getSize() + "",
+							song.getAlbum(), song.getAlbumId() + "",
+							song.getFirstLetter() });
+			db.setTransactionSuccessful();
+			db.endTransaction();
+		}
+
+	}
+
+	// 获取数据库中歌曲数目
+	@Override
+	public int getMusicCountInDB() {
+		Cursor cursor = db.rawQuery("select * from music_list", null);
+		if (cursor != null) {
+			Log.i(TAG, "数据库中有" + cursor.getCount() + "首歌");
+			cursor.close();
+			return cursor.getCount();
+		}
+
+		return 0;
+	}
+
 }

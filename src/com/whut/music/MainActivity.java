@@ -1,4 +1,4 @@
-package com.whut.activitys;
+package com.whut.music;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -34,26 +34,28 @@ public class HanZi2PinYin {
 	 */
 	public static String getPinYin(String inputStr) {
 
-		String returnStr = "";
+		String returnStr = "#";
 
 		byte[] inputByte;
 		try {
 			inputByte = inputStr.getBytes("gbk");
 
-			if (inputByte.length == 1) { // 英文歌曲
-				returnStr = inputStr;
+			if (inputByte.length == 1) {
+				char c = inputStr.charAt(0);
+				if (c >= 'A' && c <= 'Z') { // 英文
+					returnStr = inputStr;
+				}
 			} else { // 中文歌曲
 				// IdentityHashMap，允许有相同的key，key的存储地址不同
-				 Map<Integer, Integer> inputMap = new IdentityHashMap<Integer,
-				 Integer>();
-				 inputMap.put(Integer.parseInt(inputByte[0] + ""),
-				 Integer.parseInt(inputByte[1] + ""));
-				 returnStr = pinyinMap.get(hanziMap.get(inputMap));
-				
+				Map<Integer, Integer> inputMap = new IdentityHashMap<Integer, Integer>();
+				inputMap.put(Integer.parseInt(inputByte[0] + ""),
+						Integer.parseInt(inputByte[1] + ""));
+				returnStr = pinyinMap.get(hanziMap.get(inputMap));
+
 			}
 
-			if (returnStr == null || returnStr.equals("")) {
-				returnStr = "error";
+			if (returnStr == null) {
+				returnStr = "#";
 			}
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
@@ -65,7 +67,7 @@ public class HanZi2PinYin {
 	/**
 	 * 根据raw目录下的文本文件建立汉字与拼音的映射关系
 	 */
-	public static void readTxtFile(Context context) {
+	public static boolean readTxtFile(Context context) {
 
 		try {
 			InputStream inputStream = MyApplication.getContext().getResources()
@@ -86,11 +88,10 @@ public class HanZi2PinYin {
 				// 建立映射关系
 				pinyinMap.put(j, pinyinContent);
 				for (int i = 0; i < byteArray.length; i += 2) {
-					 Map<Integer, Integer> map = new IdentityHashMap<Integer,
-					 Integer>();
-					 map.put(Integer.parseInt(byteArray[i] + ""),
-					 Integer.parseInt(byteArray[i + 1] + ""));
-					 hanziMap.put(map, j);
+					Map<Integer, Integer> map = new IdentityHashMap<Integer, Integer>();
+					map.put(Integer.parseInt(byteArray[i] + ""),
+							Integer.parseInt(byteArray[i + 1] + ""));
+					hanziMap.put(map, j);
 				}
 				j++;
 			}
@@ -98,7 +99,10 @@ public class HanZi2PinYin {
 		} catch (IOException e) {
 
 			e.printStackTrace();
+			return false;
 		}
+
+		return true;
 
 	}
 

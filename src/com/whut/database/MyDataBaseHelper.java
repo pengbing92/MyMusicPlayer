@@ -15,10 +15,10 @@ public class MyDataBaseHelper extends SQLiteOpenHelper {
 	private static MyDataBaseHelper instance;
 
 	// 歌曲列表Table
-	private static final String CREATE_MUSIC_LIST = "create table if not exists music_list (id integer "
+	public static final String CREATE_MUSIC_LIST = "create table if not exists music_list (id integer "
 			+ "primary key autoincrement, m_id integer, m_dur integer, m_singer varchar(255), "
 			+ "m_name varchar(255), m_path varchar(255), m_size integer, m_album varchar(255), "
-			+ "m_album_id integer)";
+			+ "m_album_id integer, first_letter varchar(255))";
 
 	// 当前播放歌曲Table
 	private static final String CREATE_CURRENT_SONG = "create table if not exists current_song (m_id integer, "
@@ -38,10 +38,10 @@ public class MyDataBaseHelper extends SQLiteOpenHelper {
 			"m_byte2 integer, m_index integer)";
 	
 	// 给歌曲列表Table新增一列first_letter
-	private static final String ADD_COLUMN_FIRSTLETTER = "alter table music_list add column first_letter varchar(255)";
+	//public static final String ADD_COLUMN_FIRSTLETTER = "alter table music_list add column first_letter varchar(255)";
 
 	public MyDataBaseHelper(Context context) {
-		super(context, "musicplayer.db", null, 3);
+		super(context, "musicplayer.db", null, 1);
 	}
 
 	public static MyDataBaseHelper getInstance(Context context) {
@@ -63,18 +63,16 @@ public class MyDataBaseHelper extends SQLiteOpenHelper {
 		db.execSQL(CREATE_CURRENT_MODEL);
 		db.execSQL(CREATE_PINYIN_TABLE);
 		db.execSQL(CREATE_HANZI_TABLE);
-		db.execSQL(ADD_COLUMN_FIRSTLETTER);
 	}
 
 	// 数据库更新
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		switch (oldVersion) {
-		case 1:
-			db.execSQL(CREATE_PINYIN_TABLE);
-			db.execSQL(CREATE_HANZI_TABLE);
-		case 2:
-			db.execSQL(ADD_COLUMN_FIRSTLETTER);
+//		case 1:
+//			db.execSQL(CREATE_PINYIN_TABLE);
+//			db.execSQL(CREATE_HANZI_TABLE);
+		
 		default:
 		}
 

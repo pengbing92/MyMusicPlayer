@@ -6,6 +6,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,14 +15,12 @@ import android.os.Environment;
 import android.util.Log;
 
 import com.whut.entiy.LrcContent;
-import com.whut.entiy.OnLineLrc;
 import com.whut.httpclient.MyClient;
-import com.whut.util.JsonUtil;
 
 /**
- * 2013/6/1
  * 
- * @author wwj 处理歌词的类
+ * @author chenfu
+ * 
  */
 public class LrcProcess {
 	private List<LrcContent> lrcList; // List集合存放歌词内容对象
@@ -29,17 +29,17 @@ public class LrcProcess {
 	private List<LrcContent> repeatLrcList; // 重复出现的歌词
 
 	private String songName = ""; // 要检索歌词的歌曲名
+	private String singer = ""; // 要检索歌词的歌手
 	private boolean DOWNLOAD = false; // 下载是否完成
 	private static boolean NOT_FOUND = false; // 是否检索到歌词
-	
+
 	private String rootPath = Environment.getExternalStorageDirectory()
-			.getPath() + "/PengBing_lrcs";
+			.getPath() + "/MyMusicPlayer/PengBing_lrcs";
 
 	private File prcFile; // 歌词文件
-	
+
 	private MyClient myClient; // httpClient
-	
-	
+
 	public static void setNOT_FOUND(boolean isFound) {
 		NOT_FOUND = isFound;
 	}
@@ -60,12 +60,13 @@ public class LrcProcess {
 	/**
 	 * 读取歌词
 	 * 
-	 * @param path
-	 * @return
+	 * @param song
+	 * @param singer
 	 */
-	public void readLRC(String song) {
+	public void readLRC(String song, String singer) {
 
 		this.songName = song;
+		this.singer = singer;
 
 		// 去掉歌曲名中的()
 		String nameArray[] = songName.split("\\(");
@@ -163,17 +164,17 @@ public class LrcProcess {
 		timeStr = timeStr.replace(".", "@");
 
 		String timeData[] = timeStr.split("@"); // 将时间分隔成字符串数组
-		
+
 		int minute = 0;
 		int second = 0;
 		int millisecond = 0;
-		
+
 		// 分离出分、秒并转换为整型
-//		minute = Integer.parseInt(timeData[0]);
-//		second = Integer.parseInt(timeData[1]);
-//		if (timeData.length > 2) {
-//			millisecond = Integer.parseInt(timeData[2]);
-//		}
+		// minute = Integer.parseInt(timeData[0]);
+		// second = Integer.parseInt(timeData[1]);
+		// if (timeData.length > 2) {
+		// millisecond = Integer.parseInt(timeData[2]);
+		// }
 		try {
 			// 分离出分、秒并转换为整型
 			minute = Integer.parseInt(timeData[0]);
@@ -183,8 +184,7 @@ public class LrcProcess {
 			}
 		} catch (NumberFormatException e) {
 			/**
-			 * 少数情况下，乱码导致不能正常解析时间，从而导致程序崩溃
-			 * 所以要捕捉异常
+			 * 少数情况下，乱码导致不能正常解析时间，从而导致程序崩溃 所以要捕捉异常
 			 */
 			e.printStackTrace();
 			NOT_FOUND = true;
@@ -248,38 +248,57 @@ public class LrcProcess {
 		@Override
 		public void run() {
 
-			String url = "http://geci.me/api/lyric/" + songName;
+			// String url = "http://geci.me/api/lyric/" + songName;
+			try {
+				String url = "http://www.cnlyric.com/search.php?k="
+						+ URLEncoder.encode(songName + " " + singer, "gb2312")
+						+ "&t=s";
 
-			String response = myClient.doGet(url);
+				String response = myClient.doGet(url);
 
-			if (response == null) {
-				// 网络无响应
-				Log.i("response", "网络请求无响应");
-			} else {
-				// 网络请求成功
-				if (JsonUtil.getonLineLrcList(response).size() > 0) {
-					/**
-					 * 测试，下载返回结果中的第一个条记录， 后续可以加入切换歌词的功能
-					 */
-					OnLineLrc onLineLrc = new OnLineLrc();
-					onLineLrc = JsonUtil.getonLineLrcList(response).get(0);
-					String lrcUrl = onLineLrc.getDownloadUrl(); // 下载歌词的链接
-
-					DOWNLOAD = myClient.createPrcFile(rootPath, lrcUrl, songName);
+				if (response == null) {
+					// 网络无响应
+					Log.i("response", "网络请求无响应");
 				} else {
-					Log.i("search", "没有搜索结果");
-				}
 
-				if (DOWNLOAD) {
-					// 歌词下载完成，读取歌词文件
-					readPrc();
-					NOT_FOUND = false;
-				} else {
-					// 未完成下载，未检索到相关歌词
-					DOWNLOAD = false;
-					NOT_FOUND = true;
-					Log.i("search_lrc", "未检索到歌词...");
+					if (response.contains("geci/")) {
+						String str = response.split("geci/")[1];
+						String numStr = str.split(".html")[0];
+
+						String downloadUrl = "http://www.cnlyric.com/LrcDown/"
+								+ numStr + ".lrc";
+
+//						Timer timer = new Timer();
+//						TimerTask task = new TimerTask() {
+//							
+//							@Override
+//							public void run() {
+//								
+//								
+//							}
+//						};
+//						timer.schedule(task, 15000);
+						DOWNLOAD = myClient.createPrcFile(rootPath, downloadUrl,
+								songName);
+
+						if (DOWNLOAD) {
+							// 歌词下载完成，读取歌词文件
+							readPrc();
+							NOT_FOUND = false;
+						} else {
+							// 未完成下载，未检索到相关歌词
+							DOWNLOAD = false;
+							NOT_FOUND = true;
+							Log.i("search_lrc", "未检索到歌词...");
+						}
+					} else { // 15秒内只能下载一次
+						Log.i("错误信息", "未检索到歌词...");
+					}
+					
 				}
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 
 		}

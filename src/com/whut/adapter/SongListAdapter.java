@@ -9,7 +9,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SectionIndexer;
@@ -53,7 +52,6 @@ public class SongListAdapter extends BaseAdapter implements SectionIndexer {
 		TextView song_name;
 		TextView song_singer;
 		ImageView albumImage; // 专辑图片
-		Button del_Btn; // 删除按钮
 		LinearLayout sortKeyLayout;
 		TextView sortKey;
 		
@@ -87,7 +85,6 @@ public class SongListAdapter extends BaseAdapter implements SectionIndexer {
 			viewHolder.song_singer = (TextView) convertView
 					.findViewById(R.id.song_singer);
 			viewHolder.albumImage = (ImageView) convertView.findViewById(R.id.albumImage);
-			viewHolder.del_Btn = (Button) convertView.findViewById(R.id.del_Btn);
 			viewHolder.sortKeyLayout = (LinearLayout) convertView.findViewById(R.id.sort_key_layout);
 			viewHolder.sortKey = (TextView) convertView.findViewById(R.id.sort_key);
 			convertView.setTag(viewHolder);		

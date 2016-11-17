@@ -4,8 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * 将歌曲实体类做序列化处理， 
- * 以便于将歌曲列表从SongAty传递到MainAty
+ * 将歌曲实体类做序列化处理， 以便于将歌曲列表从SongAty传递到MainAty
  * 
  * @author chenfu
  * 
@@ -19,8 +18,8 @@ public class Song implements Parcelable {
 	private String mp3Path; // 存储路径
 	private long size; // 文件大小
 	private String album; // 专辑图片
-	private long albumId;  // 专辑图片Id
-	
+	private long albumId; // 专辑图片Id
+
 	// 歌曲名首字母，用于歌曲列表分组展示
 	private String firstLetter;
 
@@ -79,8 +78,6 @@ public class Song implements Parcelable {
 	public void setMp3Path(String mp3Path) {
 		this.mp3Path = mp3Path;
 	}
-	
-	
 
 	public String getAlbum() {
 		return album;
@@ -96,6 +93,17 @@ public class Song implements Parcelable {
 
 	public void setAlbumId(long albumId) {
 		this.albumId = albumId;
+	}
+
+	/**
+	 * 重写toString方法
+	 */
+	@Override
+	public String toString() {
+		String songName = getSongName().replace("-", "").replace("live", "")
+				.replace(" ", "");
+		String singer = getSinger();
+		return singer + " - " + songName;
 	}
 
 	@Override

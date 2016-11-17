@@ -14,7 +14,6 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -25,16 +24,14 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.whut.activitys.SongListActivity;
 import com.whut.application.MusicManager;
-import com.whut.application.MyApplication;
 import com.whut.database.entiy.Play_Model;
 import com.whut.database.entiy.Song;
 import com.whut.database.service.imp.ModelServiceDao;
 import com.whut.database.service.imp.SongServiceDao;
 import com.whut.music.R;
+import com.whut.music.SongListActivity;
 import com.whut.service.MyMusicService;
-import com.whut.util.HanZi2PinYin;
 import com.whut.util.ImageUtil;
 import com.whut.util.Msg_Music;
 import com.whut.util.PinyinComparator;
@@ -88,6 +85,8 @@ public class LocalFragment extends Fragment implements OnClickListener {
 
 	// 图片管理
 	private ImageUtil imageUtil;
+	
+	private static final String TAG = LocalFragment.class.getName();
 
 	@SuppressLint("HandlerLeak")
 	public static Handler handler = new Handler() {
@@ -96,8 +95,8 @@ public class LocalFragment extends Fragment implements OnClickListener {
 			case 0:
 				// 更新UI
 				currentSong = songServiceDao.getCurrentSong();
-				songName.setText(currentSong.getSongName());
-				singer.setText(currentSong.getSinger());
+				songName.setText(currentSong.getSongName().split("\\(")[0].trim());
+				singer.setText(currentSong.getSinger().split(",")[0].trim());
 				if (MusicManager.isPlaying()) {
 					playBtn.setBackgroundResource(R.drawable.paubtn_selector);
 				} else {
@@ -111,7 +110,7 @@ public class LocalFragment extends Fragment implements OnClickListener {
 	};
 
 	@Override
-	public void onCreate(@Nullable Bundle savedInstanceState) {
+	public void onCreate( Bundle savedInstanceState) {
 		/**
 		 * onCreate方法只执行一次
 		 */
@@ -152,7 +151,7 @@ public class LocalFragment extends Fragment implements OnClickListener {
 	}
 
 	@Override
-	public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+	public void onActivityCreated(Bundle savedInstanceState) {
 
 		localContent = (TextView) getActivity().findViewById(
 				R.id.localFM_Content);
@@ -171,8 +170,8 @@ public class LocalFragment extends Fragment implements OnClickListener {
 		nextBtn.setOnClickListener(this);
 
 		songImage.setBackgroundResource(R.drawable.app_music);
-		songName.setText(songName_str);
-		singer.setText(singer_str);
+		songName.setText(songName_str.split("\\(")[0].trim());
+		singer.setText(singer_str.split(",")[0].trim());
 
 		super.onActivityCreated(savedInstanceState);
 	}
@@ -186,6 +185,7 @@ public class LocalFragment extends Fragment implements OnClickListener {
 			break;
 		case R.id.localFM_Content:
 			Intent gotoSongListAty = new Intent(context, SongListActivity.class);
+			gotoSongListAty.putExtra("secondPause", secondPause);
 			startActivity(gotoSongListAty);
 			break;
 		case R.id.play_btn:
@@ -241,9 +241,6 @@ public class LocalFragment extends Fragment implements OnClickListener {
 
 	public void initData() {
 
-		
-		
-
 		// 扫描媒体库，获得歌曲列表
 		songList = MusicManager.getSongsFromMediaDB(context);
 
@@ -288,6 +285,8 @@ public class LocalFragment extends Fragment implements OnClickListener {
 			songName_str = currentSong.getSongName();
 			singer_str = currentSong.getSinger();
 
+		} else { // 媒体库中没有歌曲
+			Log.i(TAG, "媒体库中没有歌曲");
 		}
 
 		modelServiceDao.updateCurrentModel(currentModel);

@@ -53,7 +53,7 @@ public class MyClient
         HttpConnectionParams.setSoTimeout(httpParams, SO_TIMEOUT);
         DefaultHttpClient client = new DefaultHttpClient(httpParams);
         client.getParams().setParameter(
-				CoreProtocolPNames.HTTP_CONTENT_CHARSET, "UTF-8");
+				CoreProtocolPNames.HTTP_CONTENT_CHARSET, "gb2312");
         return client;
     }
 
@@ -101,7 +101,7 @@ public class MyClient
             InputStream instream = response.getEntity().getContent();
 
             BufferedReader reader =
-                    new BufferedReader(new InputStreamReader(instream), 65728);
+                    new BufferedReader(new InputStreamReader(instream, "gb2312"), 65728);
             String line = null;
 
             while ((line = reader.readLine()) != null) {
@@ -222,6 +222,7 @@ public class MyClient
     public String doGet(String service){
         Log.i("cas client doGet url:", service);
         HttpGet httpGet = new HttpGet (service);
+        
         try
         {
             HttpResponse response = httpClient.execute(httpGet);
@@ -371,7 +372,7 @@ public class MyClient
 			
 			InputStream inputStream = httpResponse.getEntity().getContent();
 			
-			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream),65728);
+			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "gb2312"),65728);
 			
 			// 创建本地文件
 			String filePath = rootPath + "/" + songName + ".prc";		

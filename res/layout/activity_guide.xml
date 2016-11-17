@@ -13,11 +13,12 @@
         android:id="@+id/enterAppBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="90dp"
         android:layout_alignParentBottom="true"
-        android:layout_marginBottom="50dp"
+        android:layout_centerHorizontal="true"
         android:contentDescription="@string/image"
         android:text="@string/enterApp"
+        android:visibility="gone"
         android:background="@drawable/img_welcome_art" />
 
 </RelativeLayout>

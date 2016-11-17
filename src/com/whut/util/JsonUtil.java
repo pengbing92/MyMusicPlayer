@@ -12,6 +12,9 @@ import android.util.Log;
 import com.whut.entiy.OnLineLrc;
 
 /**
+ * 
+ * 新版的下载歌词已不再使用此类
+ * 
  * 解析网络返回的json数据
  * @author chenfu
  *

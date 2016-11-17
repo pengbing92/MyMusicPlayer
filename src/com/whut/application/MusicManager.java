@@ -15,10 +15,10 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.RemoteViews;
 
-import com.whut.activitys.MainActivity;
 import com.whut.database.entiy.Song;
 import com.whut.database.service.imp.SongServiceDao;
 import com.whut.fragment.LocalFragment;
+import com.whut.music.MainActivity;
 import com.whut.music.R;
 import com.whut.service.MyMusicService;
 import com.whut.util.HanZi2PinYin;
@@ -35,10 +35,12 @@ public class MusicManager {
 	// 点击通知栏进入LrcAty，再返回SongAty的标志
 	private static boolean notifMainToSong = false;
 
+	// 是否正在播放
 	private static boolean isPlaying = false;
 
 	private static int seekPosition = -1;
 
+	// Service是否启动
 	private static boolean isServiceOpen = true;
 
 	public static boolean isServiceOpen() {
@@ -129,15 +131,15 @@ public class MusicManager {
 
 				// 设置首字母
 				song.setFirstLetter(getFirstLetter(song.getSongName()));
-
-				// System.out.println(songName);
+				
+				//System.out.println(songName);
 
 				songList.add(song);
 			}
 
 		}
 
-		Log.i("song_num", "媒体库中包含" + songList.size() + "首歌曲");
+		Log.i("MusicManager", "媒体库中包含" + songList.size() + "首歌曲");
 		cursor.close();
 
 		return songList;

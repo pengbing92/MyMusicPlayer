@@ -1,4 +1,4 @@
-package com.whut.activitys;
+package com.whut.music;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +20,6 @@ import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
-import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -38,7 +37,6 @@ import com.whut.database.service.imp.ModelServiceDao;
 import com.whut.database.service.imp.SongServiceDao;
 import com.whut.fragment.AlbumFragment;
 import com.whut.fragment.LrcFragment;
-import com.whut.music.R;
 import com.whut.service.MyMusicService;
 import com.whut.util.Msg_Music;
 import com.whut.util.ToastUtil;
@@ -51,7 +49,7 @@ import com.whut.view.LrcProcess;
  * 
  */
 public class LrcActivity extends FragmentActivity implements OnClickListener,
-		OnSeekBarChangeListener, OnPageChangeListener {
+		OnSeekBarChangeListener {
 
 	// 上一曲，暂停/播放，下一曲 按钮
 	private ImageView pre_btn;
@@ -265,7 +263,6 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 		 */
 		initFragMents();
 		viewPager = (ViewPager) findViewById(R.id.viewPager_lrc_album);
-		viewPager.addOnPageChangeListener(this);
 		viewPager.setAdapter(myFragmentAdapter);
 		viewPager.setCurrentItem(0);
 
@@ -735,24 +732,4 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 
 	}
 
-	/**
-	 * 滑动切换歌词与专辑图片显示
-	 */
-	@Override
-	public void onPageScrollStateChanged(int arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onPageScrolled(int arg0, float arg1, int arg2) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onPageSelected(int arg0) {
-		// TODO Auto-generated method stub
-
-	}
 }

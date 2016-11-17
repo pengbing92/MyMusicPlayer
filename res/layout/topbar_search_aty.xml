@@ -11,32 +11,54 @@
         android:layout_alignParentLeft="true"
         android:layout_centerVertical="true"
         android:layout_marginLeft="10dp"
-        android:background="@drawable/ic_action_arrow_left"
+        android:layout_marginRight="10dp"
+        android:background="@drawable/ic_action_arrow_left_white"
         android:contentDescription="@string/image"
         android:scaleType="center" />
+    
+    <ImageView
+        android:id="@+id/clearBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="5dp"
+        android:layout_centerVertical="true"
+        android:layout_toLeftOf="@+id/searchBtn"
+        android:background="@drawable/ic_action_cancel"
+        android:visibility="gone"
+        android:contentDescription="@string/image" />
+
+    <ImageView
+        android:id="@+id/searchBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="10dp"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        android:background="@drawable/ic_action_search"
+        android:contentDescription="@string/image" />
+
 
     <EditText
         android:id="@+id/search_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:layout_marginLeft="10dp"
-        android:layout_toLeftOf="@+id/shareBtn"
-        android:layout_toRightOf="@+id/back"
-        android:background="@drawable/input"
-        android:hint="@string/search_hint"
-        android:textColorHint="@color/lightgrey"
-        android:singleLine="true"
-        android:maxLines="1" />
-
-    <Button
-        android:id="@+id/shareBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
-        android:layout_marginRight="10dp"
+        android:layout_toLeftOf="@+id/clearBtn"
+        android:layout_toRightOf="@+id/back"
         android:background="@null"
-        android:text="@string/search_btn" />
+        android:hint="@string/search_hint"
+        android:maxLines="1"
+        android:singleLine="true"
+        android:gravity="center_vertical"
+        android:textColorHint="#ffdddddd" />
+    
+    <View 
+        android:layout_width="wrap_content"
+        android:layout_height="0.5dp"
+        android:layout_marginTop="7dp"
+        android:background="@color/black"
+        android:layout_below="@+id/search_content"
+        android:layout_alignRight="@+id/searchBtn"
+        android:layout_alignLeft="@+id/search_content"/>
 
 </RelativeLayout>

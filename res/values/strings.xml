@@ -16,9 +16,13 @@
     <string name="local_music">本地音乐</string>
     <string name="del_Btn">删除</string>
     <string name="title_activity_search">SearchActivity</string>
-    <string name="search_hint">请在此输入</string>
+    <string name="search_hint">搜索音乐、歌手</string>
     <string name="search_btn">确定</string>
     <string name="title_activity_guide">GuideActivity</string>
     <string name="enterApp">进入</string>
+    <string name="blur_tv">模糊查询结果</string>
+    <string name="title_activity_search_info">SearchInfoActivity</string>
+    <string name="songName">歌曲名</string>
+    <string name="singerName">歌手名</string>
 
 </resources>

@@ -1,4 +1,4 @@
-package com.whut.activitys;
+package com.whut.music;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -35,7 +35,6 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.whut.adapter.SongListAdapter;
 import com.whut.application.MusicManager;
@@ -43,7 +42,6 @@ import com.whut.database.entiy.Play_Model;
 import com.whut.database.entiy.Song;
 import com.whut.database.service.imp.ModelServiceDao;
 import com.whut.database.service.imp.SongServiceDao;
-import com.whut.music.R;
 import com.whut.service.MyMusicService;
 import com.whut.util.Msg_Music;
 import com.whut.util.ToastUtil;
@@ -172,8 +170,8 @@ public class SongListActivity extends Activity implements OnClickListener,
 				currentId = currentSong.getId();
 				songName_str = currentSong.getSongName();
 				singer_str = currentSong.getSinger();
-				songName.setText(songName_str);
-				singer.setText(singer_str);
+				songName.setText(songName_str.split("\\(")[0].trim());
+				singer.setText(singer_str.split(",")[0].trim());
 				// 正在播放的歌曲字体变红
 				songListAdapter.setCurrentItem(currentId);
 				songListAdapter.notifyDataSetChanged();
@@ -200,10 +198,6 @@ public class SongListActivity extends Activity implements OnClickListener,
 		currentSong = new Song();
 		songServiceDao = new SongServiceDao(context);
 		modelServiceDao = new ModelServiceDao(context);
-		
-		
-
-		Toast.makeText(context, "Song_onCreate", Toast.LENGTH_SHORT).show();
 
 		// 创建歌词文件夹
 		createLrcFolder();
@@ -218,14 +212,14 @@ public class SongListActivity extends Activity implements OnClickListener,
 	// 创建保存歌词文件的文件夹
 	public void createLrcFolder() {
 
-		File lrcDir = new File(rootPath + "/PengBing_lrcs");
+		File lrcDir = new File(rootPath + "/MyMusicPlayer/PengBing_lrcs");
 		if (!lrcDir.exists()) {
 			lrcDir.mkdirs();
 		}
 	}
 
 	/**
-	 * 从MainAty返回,执行onStart->onResume
+	 * 从LrcAty返回,执行onStart->onResume
 	 */
 	@Override
 	protected void onStart() {
@@ -283,9 +277,12 @@ public class SongListActivity extends Activity implements OnClickListener,
 
 	// 初始化数据
 	public void initData() {
+		
+		Intent intent = getIntent();
+		secondPause = intent.getIntExtra("secondPause", -1);
 
 		songList = songServiceDao.getAllSong();
-
+		
 		isPlaying = MusicManager.isPlaying();
 		currentSong = songServiceDao.getCurrentSong();
 		currentId = currentSong.getId();
@@ -329,8 +326,8 @@ public class SongListActivity extends Activity implements OnClickListener,
 			playBtn.setBackgroundResource(R.drawable.playbtn_selector);
 		}
 
-		songName.setText(songName_str);
-		singer.setText(singer_str);
+		songName.setText(songName_str.split("\\(")[0].trim());
+		singer.setText(singer_str.split(",")[0].trim());
 		songListAdapter.setCurrentItem(currentId);
 		songListAdapter.notifyDataSetChanged();
 
@@ -416,8 +413,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 			// 重置
 			playNext = false;
 			playBtn.setBackgroundResource(R.drawable.paubtn_selector);
-		} else {
-			// 没有切换歌曲
+		} else { // 没有切换歌曲	
 			if (isPlaying) {
 				msg = Msg_Music.PAUSE;
 				secondPause = -1;
@@ -562,6 +558,9 @@ public class SongListActivity extends Activity implements OnClickListener,
 							.getLayoutParams();
 					params.topMargin = 0;
 					alphabet_titleLayout.setLayoutParams(params);
+					if (section == -29) { // #号的情况
+						section = 0;
+					}
 					alphabetTitle.setText(String.valueOf(alphabet
 							.charAt(section)));
 				}
