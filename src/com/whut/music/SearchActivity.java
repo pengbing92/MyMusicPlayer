@@ -19,6 +19,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 
+import com.whut.application.MusicManager;
 import com.whut.database.entiy.Song;
 import com.whut.database.service.imp.SongServiceDao;
 import com.whut.util.ToastUtil;
@@ -86,23 +87,36 @@ public class SearchActivity extends Activity implements OnClickListener,
 		case R.id.clearBtn:
 			clearText();
 			break;
-
 		default:
 			break;
 		}
 
 	}
 
+	/**
+	 * 点击搜索按钮查询
+	 */
 	private void search() {
+		/**
+		 * TODO 本来应该显示几个Fragment，此处为了方便，直接显示在搜索框下面
+		 */
 		String searchStr = searchEt.getText().toString().trim();
 		Song song = new Song();
 		song = songServiceDao.getSongByName(searchStr);
-		if (song != null) {
+		if (song.getSongName() != null) {
 			ToastUtil.toastInfo(this, song.getSongName());
+			showSearchResult(song);
 		} else {
-			Log.i(TAG, "检索无结果...");
-			ToastUtil.toastInfo(this, "null");
+			Log.i(TAG, "检索无结果..");
 		}
+	}
+
+	// 显示搜索结果
+	private void showSearchResult(Song song) {
+		resultList.clear();
+		resultList.add(song);
+		searchList.setAdapter(new ArrayAdapter<Song>(this,
+				android.R.layout.simple_expandable_list_item_1, resultList));
 	}
 
 	private void clearText() {
@@ -115,10 +129,10 @@ public class SearchActivity extends Activity implements OnClickListener,
 	 */
 	@Override
 	public void afterTextChanged(Editable s) { // 展示模糊查询结果
-		// 模糊查询
 		resultList = songServiceDao.getSongs(s.toString().trim());
 		searchList.setAdapter(new ArrayAdapter<Song>(this,
 				android.R.layout.simple_expandable_list_item_1, resultList));
+		
 		if (s.toString().trim().equals("")) { // 输入框中内容被清除
 			resultList.clear();
 			clearBtn.setVisibility(View.GONE);
@@ -135,6 +149,7 @@ public class SearchActivity extends Activity implements OnClickListener,
 	@Override
 	public void onTextChanged(CharSequence s, int start, int before, int count) {
 		clearBtn.setVisibility(View.VISIBLE);
+		
 	}
 
 	/**
@@ -143,12 +158,18 @@ public class SearchActivity extends Activity implements OnClickListener,
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position,
 			long id) {
-		// 歌曲展示页
-		enterInfoAty();
+		// 更新当前播放歌曲
+		songServiceDao.updateCurrentSong(resultList.get(position));
+		// 更新当前播放状态
+		MusicManager.setPlaying(true);
+		// 进入歌词界面
+		enterLrcAty();
 	}
 
-	private void enterInfoAty() {
-		Intent intent = new Intent(this, SearchInfoActivity.class);
+	private void enterLrcAty() {
+		Intent intent = new Intent(this, LrcActivity.class);
+		intent.putExtra("isPlaying", MusicManager.isPlaying());
+		intent.putExtra("fromNotification", false);
 		startActivity(intent);
 		finish();
 	}
