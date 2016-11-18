@@ -22,6 +22,9 @@ import android.widget.ListView;
 import com.whut.application.MusicManager;
 import com.whut.database.entiy.Song;
 import com.whut.database.service.imp.SongServiceDao;
+import com.whut.fragment.LocalFragment;
+import com.whut.service.MyMusicService;
+import com.whut.util.Msg_Music;
 import com.whut.util.ToastUtil;
 
 public class SearchActivity extends Activity implements OnClickListener,
@@ -132,7 +135,7 @@ public class SearchActivity extends Activity implements OnClickListener,
 		resultList = songServiceDao.getSongs(s.toString().trim());
 		searchList.setAdapter(new ArrayAdapter<Song>(this,
 				android.R.layout.simple_expandable_list_item_1, resultList));
-		
+
 		if (s.toString().trim().equals("")) { // 输入框中内容被清除
 			resultList.clear();
 			clearBtn.setVisibility(View.GONE);
@@ -149,7 +152,7 @@ public class SearchActivity extends Activity implements OnClickListener,
 	@Override
 	public void onTextChanged(CharSequence s, int start, int before, int count) {
 		clearBtn.setVisibility(View.VISIBLE);
-		
+
 	}
 
 	/**
@@ -158,12 +161,42 @@ public class SearchActivity extends Activity implements OnClickListener,
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position,
 			long id) {
-		// 更新当前播放歌曲
-		songServiceDao.updateCurrentSong(resultList.get(position));
-		// 更新当前播放状态
-		MusicManager.setPlaying(true);
+
+		Song clickSong = resultList.get(position);
+		Song currentSongInDB = songServiceDao.getCurrentSong();
+
+		Log.i(TAG, "当前播放的歌曲是:" + currentSongInDB);
+
+		if (clickSong.getId() != currentSongInDB.getId()) { // 点击的歌曲与当前播放的歌曲不同
+			// 更新当前播放歌曲
+			songServiceDao.updateCurrentSong(clickSong);
+			MusicManager.setSeekPosition(-1);
+
+			startMusicService(true, Msg_Music.PLAY, -1);
+
+		} else {
+			Log.i(TAG, "点击的是正在播放的歌曲..");
+
+			if (!MusicManager.isPlaying()) { // 当前不是播放状态
+				int secondPause = LocalFragment.getPreferences().getInt(
+						"secondPause", -1);
+				startMusicService(false, Msg_Music.PLAY, secondPause);
+			}
+		}
+
 		// 进入歌词界面
 		enterLrcAty();
+	}
+
+	private void startMusicService(boolean other_music, int msg, int secondPause) {
+		Intent gotoService = new Intent(this, MyMusicService.class);
+		gotoService.putExtra("other_music", other_music);
+		gotoService.putExtra("msg", msg);
+		gotoService.putExtra("secondPause", secondPause);
+		startService(gotoService);
+		MusicManager.setServiceOpen(true);
+		MusicManager.setPlaying(true);
+
 	}
 
 	private void enterLrcAty() {

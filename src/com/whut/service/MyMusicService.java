@@ -357,7 +357,7 @@ public class MyMusicService extends Service {
 	 * @author chenfu
 	 * 
 	 */
-	// 接收MainActivity传过来的seekPosition
+	// 接收LrcActivity传过来的seekPosition
 	public class SeekPositionReceiver extends BroadcastReceiver {
 
 		@Override

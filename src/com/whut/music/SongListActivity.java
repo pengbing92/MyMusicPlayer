@@ -103,9 +103,6 @@ public class SongListActivity extends Activity implements OnClickListener,
 	// 播放下一曲
 	private boolean playNext = false;
 
-	// 是否已启动Service
-	private static boolean isServiceOpen = false;
-
 	// 手机存储根目录
 	private String rootPath = Environment.getExternalStorageDirectory()
 			.getPath();
@@ -116,6 +113,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 
 	private static SongServiceDao songServiceDao;
 	private static ModelServiceDao modelServiceDao;
+
 
 	/**
 	 * 分组的布局
@@ -162,8 +160,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 			switch (msg.what) {
 			case 0:
 				// 更新UI
-				// song_progressBar.setProgress(msg.arg1);
-				// Log.i("currentPosition", msg.arg1+"");
+				
 				break;
 			case 1:
 				currentSong = songServiceDao.getCurrentSong();
@@ -232,6 +229,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 	@Override
 	protected void onResume() {
 		super.onResume();
+
 		if (isPlaying) {
 			playBtn.setBackgroundResource(R.drawable.paubtn_selector);
 		} else {
@@ -277,19 +275,18 @@ public class SongListActivity extends Activity implements OnClickListener,
 
 	// 初始化数据
 	public void initData() {
-		
+
 		Intent intent = getIntent();
 		secondPause = intent.getIntExtra("secondPause", -1);
 
 		songList = songServiceDao.getAllSong();
-		
+
 		isPlaying = MusicManager.isPlaying();
 		currentSong = songServiceDao.getCurrentSong();
 		currentId = currentSong.getId();
 		songName_str = currentSong.getSongName();
 		singer_str = currentSong.getSinger();
 		currentModel = modelServiceDao.getCurrentModel();
-		isServiceOpen = MusicManager.isServiceOpen();
 
 		songListAdapter = new SongListAdapter(songList, context);
 
@@ -305,8 +302,6 @@ public class SongListActivity extends Activity implements OnClickListener,
 		playBtn = (ImageView) findViewById(R.id.play_btn);
 		nextBtn = (ImageView) findViewById(R.id.next_btn);
 		back_Btn = (ImageView) findViewById(R.id.back);
-		// song_progressBar = (ProgressBar) findViewById(R.id.song_progress);
-		// song_progressBar.setMax(duration);
 
 		alphabet_titleLayout = (LinearLayout) findViewById(R.id.title_alphabet);
 		alphabetTitle = (TextView) findViewById(R.id.tv_alphabet);
@@ -314,10 +309,11 @@ public class SongListActivity extends Activity implements OnClickListener,
 		sectionToastLayout = (RelativeLayout) findViewById(R.id.section_toast_layout);
 		sectionToastText = (TextView) findViewById(R.id.section_toast_text);
 
-		if (songList.size() > 0) {
-			setupContactsListView();
-			setAlpabetListener();
-		}
+		// 为ListView设置滚动监听事件
+		setupContactsListView();
+		// 设置字母表上的触摸事件
+		setAlpabetListener();
+
 		songImage.setBackgroundResource(R.drawable.app_music);
 
 		if (isPlaying) {
@@ -341,6 +337,8 @@ public class SongListActivity extends Activity implements OnClickListener,
 		startImageAnimation();
 
 	}
+
+	
 
 	// 360度旋转动画
 	public void startImageAnimation() {
@@ -413,7 +411,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 			// 重置
 			playNext = false;
 			playBtn.setBackgroundResource(R.drawable.paubtn_selector);
-		} else { // 没有切换歌曲	
+		} else { // 没有切换歌曲
 			if (isPlaying) {
 				msg = Msg_Music.PAUSE;
 				secondPause = -1;
@@ -429,7 +427,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 		gotoService.putExtra("secondPause", secondPause);
 		// 启动Service
 		startService(gotoService);
-		isServiceOpen = true;
+		MusicManager.setServiceOpen(true);
 
 	}
 
@@ -458,8 +456,6 @@ public class SongListActivity extends Activity implements OnClickListener,
 			} else {
 				MusicManager.setServiceOpen(false);
 			}
-		} else {
-			MusicManager.setServiceOpen(isServiceOpen);
 		}
 
 		return intent;
@@ -482,7 +478,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 			// 点击的是同一首歌曲
 			playNext = false;
 		} else {
-			ToastUtil.toastInfo(context, songList.get(position).getSongName());
+			//ToastUtil.toastInfo(context, songList.get(position).getSongName());
 			// 点击的不是同一首歌曲
 			MusicManager.setSeekPosition(-1);
 
@@ -538,9 +534,11 @@ public class SongListActivity extends Activity implements OnClickListener,
 	 * 为ListView设置监听事件，根据当前的滑动状态来改变分组的显示位置，从而实现挤压动画的效果。
 	 */
 	private void setupContactsListView() {
+
 		songListView.setAdapter(songListAdapter);
 		songListView.setOnItemClickListener(this);
 		songListView.setOnItemLongClickListener(this);
+
 		songListView.setOnScrollListener(new OnScrollListener() {
 			@Override
 			public void onScrollStateChanged(AbsListView view, int scrollState) {
@@ -549,6 +547,9 @@ public class SongListActivity extends Activity implements OnClickListener,
 			@Override
 			public void onScroll(AbsListView view, int firstVisibleItem,
 					int visibleItemCount, int totalItemCount) {
+				
+				handler.sendEmptyMessage(0);
+
 				int section = songListAdapter
 						.getSectionForPosition(firstVisibleItem) - 'A' + 1;
 				int nextSecPosition = songListAdapter
@@ -584,6 +585,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 					}
 				}
 				lastFirstVisibleItem = firstVisibleItem;
+
 			}
 		});
 
@@ -646,12 +648,6 @@ public class SongListActivity extends Activity implements OnClickListener,
 			if (isPlaying) {
 				if (!isEnd) {
 					currentPosition = intent.getIntExtra("position", 0);
-
-					Message msg = handler.obtainMessage();
-					msg.what = 0;
-					msg.arg1 = currentPosition;
-
-					handler.sendMessage(msg);
 				}
 			}
 
@@ -723,7 +719,5 @@ public class SongListActivity extends Activity implements OnClickListener,
 		// TODO 长按事件
 		return false;
 	}
-
-	
 
 }

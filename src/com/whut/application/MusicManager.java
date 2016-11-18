@@ -11,6 +11,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.RemoteViews;
@@ -22,6 +23,7 @@ import com.whut.music.MainActivity;
 import com.whut.music.R;
 import com.whut.service.MyMusicService;
 import com.whut.util.HanZi2PinYin;
+import com.whut.util.ImageUtil;
 import com.whut.util.Msg_Music;
 
 /**
@@ -38,6 +40,7 @@ public class MusicManager {
 	// 是否正在播放
 	private static boolean isPlaying = false;
 
+	// 进度条拖动位置
 	private static int seekPosition = -1;
 
 	// Service是否启动
@@ -131,8 +134,8 @@ public class MusicManager {
 
 				// 设置首字母
 				song.setFirstLetter(getFirstLetter(song.getSongName()));
-				
-				//System.out.println(songName);
+
+				// System.out.println(songName);
 
 				songList.add(song);
 			}
@@ -174,14 +177,20 @@ public class MusicManager {
 		// 自定义通知栏布局
 		RemoteViews remoteViews = new RemoteViews(packageName,
 				R.layout.notification);
-		// 设置通知栏的歌曲名和歌手名
+		// 设置通知栏的歌曲名和歌手名以及图片
 		Song currentSong = new Song();
 		SongServiceDao songServiceDao = new SongServiceDao(context);
 		currentSong = songServiceDao.getCurrentSong();
-		String songName = currentSong.getSongName();
+		String songName = currentSong.getSongName().split("\\(")[0];
 		String singer = currentSong.getSinger();
 		remoteViews.setTextViewText(R.id.notif_name, songName);
 		remoteViews.setTextViewText(R.id.notif_singer, singer);
+		Bitmap bitmap = ImageUtil.getInstance(context)
+				.getBitmapFromMemoryCache(currentSong.getAlbumId());
+		if (bitmap == null) {
+			bitmap = ImageUtil.getInstance(context).getDefaultArtworkInList();
+		}
+		remoteViews.setImageViewBitmap(R.id.music_image, bitmap);
 
 		/**
 		 * 设置按钮点击事件

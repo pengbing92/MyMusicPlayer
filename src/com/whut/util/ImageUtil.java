@@ -23,7 +23,7 @@ import com.whut.music.R;
 public class ImageUtil {
 
 	/**
-	 * 图片缓存技术的核心类，用于缓存所有下载好的图片，在程序内存达到设定值时会将最少最近使用的图片移除掉。
+	 * 图片缓存技术的核心类，在程序内存达到设定值时会将最少最近使用的图片移除掉。
 	 */
 	private static LruCache<Long, Bitmap> mMemoryCache;
 
@@ -64,7 +64,7 @@ public class ImageUtil {
 	 * @param key
 	 *            LruCache的键，这里传入album_id。
 	 * @param bitmap
-	 *            LruCache的键，这里传入Bitmap对象。
+	 *            LruCache的值，这里传入Bitmap对象。
 	 */
 	public void addBitmapToMemoryCache(Long key, Bitmap bitmap) {
 		if (bitmap == null) {

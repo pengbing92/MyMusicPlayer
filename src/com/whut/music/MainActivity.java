@@ -47,6 +47,8 @@ public class MainActivity extends FragmentActivity implements OnClickListener,
 	// 按钮
 	private ImageView searchBtn;
 	private ImageView settingBtn;
+	
+	private static final String TAG = MainActivity.class.getName();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -131,22 +133,14 @@ public class MainActivity extends FragmentActivity implements OnClickListener,
 	}
 
 	@Override
-	protected void onRestart() {
-		Log.i("MainAty", "onRestart");
-		// 更新UI
-		LocalFragment.handler.sendEmptyMessage(0);
-		super.onRestart();
-	}
-
-	@Override
 	protected void onStop() {
-		Log.i("MainAty", "onStop");
+		Log.i(TAG, "onStop");
 		super.onStop();
 	}
 
 	@Override
 	protected void onDestroy() {
-		Log.i("MainAty", "onDestory");
+		Log.i(TAG, "onDestory");
 		super.onDestroy();
 	}
 

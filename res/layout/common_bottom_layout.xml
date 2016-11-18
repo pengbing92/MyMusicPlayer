@@ -31,7 +31,6 @@
             android:layout_height="wrap_content"
             android:textColor="@color/black"
             android:singleLine="true"
-            android:text="@string/songName"
             android:textSize="15sp" />
 
         <TextView
@@ -39,7 +38,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:singleLine="true"
-            android:text="@string/singerName"
             android:textColor="@color/black" />
     </LinearLayout>
 

@@ -32,7 +32,6 @@ import com.whut.database.service.imp.SongServiceDao;
 import com.whut.music.R;
 import com.whut.music.SongListActivity;
 import com.whut.service.MyMusicService;
-import com.whut.util.ImageUtil;
 import com.whut.util.Msg_Music;
 import com.whut.util.PinyinComparator;
 import com.whut.view.LrcProcess;
@@ -50,8 +49,11 @@ public class LocalFragment extends Fragment implements OnClickListener {
 	private String singer_str = "";
 
 	private static SharedPreferences preferences;
-	private static Editor editor;
+	public static SharedPreferences getPreferences() {
+		return preferences;
+	}
 
+	private static Editor editor;
 	public static Editor getEditor() {
 		return editor;
 	}
@@ -82,9 +84,6 @@ public class LocalFragment extends Fragment implements OnClickListener {
 	private int msg = -1;
 	// 播放下一曲
 	private boolean playNext = false;
-
-	// 图片管理
-	private ImageUtil imageUtil;
 	
 	private static final String TAG = LocalFragment.class.getName();
 
@@ -97,12 +96,13 @@ public class LocalFragment extends Fragment implements OnClickListener {
 				currentSong = songServiceDao.getCurrentSong();
 				songName.setText(currentSong.getSongName().split("\\(")[0].trim());
 				singer.setText(currentSong.getSinger().split(",")[0].trim());
-				if (MusicManager.isPlaying()) {
+				break;
+			case 1:
+				if (isPlaying) {
 					playBtn.setBackgroundResource(R.drawable.paubtn_selector);
 				} else {
 					playBtn.setBackgroundResource(R.drawable.playbtn_selector);
 				}
-				break;
 			default:
 				break;
 			}
@@ -111,6 +111,8 @@ public class LocalFragment extends Fragment implements OnClickListener {
 
 	@Override
 	public void onCreate( Bundle savedInstanceState) {
+		Log.i(TAG, "onCreate");
+		super.onCreate(savedInstanceState);
 		/**
 		 * onCreate方法只执行一次
 		 */
@@ -133,18 +135,19 @@ public class LocalFragment extends Fragment implements OnClickListener {
 		intent.putExtra("notification", notification);
 		context.sendBroadcast(intent);
 
-		initData();
 		// 初始化广播接收器
 		initBroadcastReceiver();
-		Log.i("localFM", "onCreate");
-		super.onCreate(savedInstanceState);
+		
+		// 初始化数据
+		initData();
+		
 	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 
-		Log.i("localFM", "onCreateView");
+		Log.i(TAG, "onCreateView");
 		View view = inflater.inflate(R.layout.fragment_local, container, false);
 
 		return view;
@@ -152,6 +155,8 @@ public class LocalFragment extends Fragment implements OnClickListener {
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
+		Log.i(TAG, "onActivityCreated");
 
 		localContent = (TextView) getActivity().findViewById(
 				R.id.localFM_Content);
@@ -168,12 +173,18 @@ public class LocalFragment extends Fragment implements OnClickListener {
 		localBottom.setOnClickListener(this);
 		playBtn.setOnClickListener(this);
 		nextBtn.setOnClickListener(this);
-
+		
 		songImage.setBackgroundResource(R.drawable.app_music);
+
 		songName.setText(songName_str.split("\\(")[0].trim());
 		singer.setText(singer_str.split(",")[0].trim());
-
-		super.onActivityCreated(savedInstanceState);
+		
+		if (isPlaying) { 
+			playBtn.setBackgroundResource(R.drawable.paubtn_selector);
+		} else {
+			playBtn.setBackgroundResource(R.drawable.playbtn_selector);
+		}
+		
 	}
 
 	@Override
@@ -240,13 +251,7 @@ public class LocalFragment extends Fragment implements OnClickListener {
 	}
 
 	public void initData() {
-
-		// 扫描媒体库，获得歌曲列表
-		songList = MusicManager.getSongsFromMediaDB(context);
-
-		// 对歌曲列表排序
-		sortedSongList(songList);
-
+		
 		// 从SharedPreferences中获取数据
 		preferences = context.getSharedPreferences("songInfo",
 				Context.MODE_PRIVATE);
@@ -254,47 +259,46 @@ public class LocalFragment extends Fragment implements OnClickListener {
 		secondPause = preferences.getInt("secondPause", -1);
 		currentId = preferences.getLong("currentId", 0);
 		currentModel = preferences.getInt("currentModel", Play_Model.CYCLEALL);
+		
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				// 扫描媒体库，获得歌曲列表
+				songList = MusicManager.getSongsFromMediaDB(context);
 
-		if (songList.size() > 0) {
-			// 将歌曲列表保存到数据库中
-			songServiceDao.addMusicList2DB(songList);
+				// 对歌曲列表排序
+				sortedSongList(songList);		
 
-			// 把歌曲专辑图片存入缓存
-			new Thread(new Runnable() {
+				if (songList.size() > 0) {
+					// 将歌曲列表保存到数据库中
+					songServiceDao.addMusicList2DB(songList);
 
-				@Override
-				public void run() {
-					imageUtil = ImageUtil.getInstance(context);
-					for (int i = 0; i < songList.size(); i++) {
-						Long album_id = songList.get(i).getAlbumId();
-						imageUtil.addBitmapToMemoryCache(album_id,
-								imageUtil.getSmallArtwork(album_id));
+					if (currentId != 0) {
+						songServiceDao.updateCurrentSong(songServiceDao
+								.getSongById(currentId));
+					} else {
+						songServiceDao.updateCurrentSong(songList.get(0));
 					}
 
+				} else { // 媒体库中没有歌曲
+					Log.i(TAG, "媒体库中没有歌曲");
 				}
-			}).start();
-
-			if (currentId != 0) {
-				songServiceDao.updateCurrentSong(songServiceDao
-						.getSongById(currentId));
-			} else {
-				songServiceDao.updateCurrentSong(songList.get(0));
+				
 			}
-
-			currentSong = songServiceDao.getCurrentSong();
-			songName_str = currentSong.getSongName();
-			singer_str = currentSong.getSinger();
-
-		} else { // 媒体库中没有歌曲
-			Log.i(TAG, "媒体库中没有歌曲");
-		}
-
+		}).start();
+		
 		modelServiceDao.updateCurrentModel(currentModel);
 
 		/**
-		 * 点击通知栏进入LrcAty，后退进入MainAty 此时LocalFM的广播接收器才注册，接收不到播放状态广播
+		 * 点击通知栏进入LrcAty，后退进入MainAty。 此时LocalFM的广播接收器才注册，接收不到播放状态广播
 		 */
 		isPlaying = MusicManager.isPlaying();
+		
+		currentSong = songServiceDao.getCurrentSong();
+		songName_str = currentSong.getSongName();
+		singer_str = currentSong.getSinger();
+		
 
 	}
 
@@ -327,9 +331,9 @@ public class LocalFragment extends Fragment implements OnClickListener {
 
 	@Override
 	public void onDestroy() {
-		Log.i("LocalFragement", "onDestory");
+		Log.i(TAG, "onDestory");
 		/**
-		 * 播放时退出，通知栏
+		 * 播放时退出，显示通知栏
 		 */
 		if (isPlaying) {
 			MusicManager.setPlaying(isPlaying);
@@ -358,7 +362,7 @@ public class LocalFragment extends Fragment implements OnClickListener {
 
 	@Override
 	public void onDestroyView() {
-		Log.i("LocalFragement", "onDestoryView");
+		Log.i(TAG, "onDestoryView");
 		super.onDestroyView();
 	}
 
@@ -367,7 +371,7 @@ public class LocalFragment extends Fragment implements OnClickListener {
 		/**
 		 * 跳转到另一个Aty后，先执行Aty的onStop方法， 再执行Fragment的onStop方法
 		 */
-		Log.i("LocalFragement", "onStop");
+		Log.i(TAG, "onStop");
 		super.onStop();
 	}
 
@@ -377,6 +381,7 @@ public class LocalFragment extends Fragment implements OnClickListener {
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction().equals("isplaying")) {
 				isPlaying = intent.getBooleanExtra("isplaying", false);
+				handler.sendEmptyMessage(1);
 			}
 
 			if (intent.getAction().equals("switchSong")) {

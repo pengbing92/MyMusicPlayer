@@ -92,6 +92,8 @@ public class SongListAdapter extends BaseAdapter implements SectionIndexer {
 			viewHolder = (ViewHolder) convertView.getTag();
 		}
 		
+		
+		
 		//根据position获取分类的首字母的char ascii值
 		int section = getSectionForPosition(position);
 		//如果当前位置等于该分类首字母的Char的位置 ，则认为是第一次出现
@@ -111,9 +113,11 @@ public class SongListAdapter extends BaseAdapter implements SectionIndexer {
 		if (bitmap != null) {
 			viewHolder.albumImage.setImageBitmap(bitmap);
 		} else {
-			// 默认图片
-			Bitmap defaultAlbum = imageUtil.getDefaultArtworkInList();
-			viewHolder.albumImage.setImageBitmap(defaultAlbum);
+			Long album_id = songList.get(position).getAlbumId();
+			imageUtil.addBitmapToMemoryCache(album_id,
+					imageUtil.getSmallArtwork(album_id));
+			Bitmap img = imageUtil.getBitmapFromMemoryCache(song.getAlbumId());
+			viewHolder.albumImage.setImageBitmap(img);
 		}
 		
 

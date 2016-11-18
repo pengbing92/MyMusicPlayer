@@ -1,5 +1,7 @@
 package com.whut.music;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -10,18 +12,23 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
 import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnCompletionListener;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.Button;
 
 import com.whut.application.MyApplication;
+import com.whut.database.entiy.Song;
+import com.whut.database.service.imp.SongServiceDao;
 import com.whut.music.R;
 import com.whut.util.HanZi2PinYin;
+import com.whut.util.ImageUtil;
 import com.whut.view.MyVideoView;
 
 /**
@@ -30,10 +37,19 @@ import com.whut.view.MyVideoView;
  * @author chenfu
  * 
  */
-public class GuideActivity extends Activity implements OnClickListener {
+public class GuideActivity extends Activity implements OnClickListener,
+		OnCompletionListener {
 
 	private MyVideoView videoView;
 	private Button enterAppBtn;
+
+	// 图片管理
+	private ImageUtil imageUtil;
+
+	private SongServiceDao songServiceDao;
+	private List<Song> songList = new ArrayList<Song>();
+	
+	private static final String TAG = GuideActivity.class.getName();
 
 	@SuppressLint("HandlerLeak")
 	private Handler handler = new Handler() {
@@ -59,6 +75,7 @@ public class GuideActivity extends Activity implements OnClickListener {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_guide);
 
+		initData();
 		initView();
 
 		/**
@@ -75,6 +92,21 @@ public class GuideActivity extends Activity implements OnClickListener {
 
 	}
 
+	private void initData() {
+		imageUtil = ImageUtil.getInstance(this);
+		songServiceDao = new SongServiceDao(this);
+
+		songList = songServiceDao.getAllSong();
+		
+		if (songList.size() > 0) {
+			// 把歌曲缩略图加入到缓存中
+			loadBitmap();
+		} else {
+			Log.i(TAG, "数据库中没有歌曲..");
+		}
+
+	}
+
 	private void initView() {
 		videoView = (MyVideoView) findViewById(R.id.guideVideo);
 		enterAppBtn = (Button) findViewById(R.id.enterAppBtn);
@@ -85,17 +117,10 @@ public class GuideActivity extends Activity implements OnClickListener {
 		// 播放
 		videoView.start();
 		// 播放结束，进入主界面
-		videoView
-				.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-					@Override
-					public void onCompletion(MediaPlayer mediaPlayer) {
-						// 播放结束，进入MainAty
-						enterMainAty();
-					}
-				});
+		videoView.setOnCompletionListener(this);
 
 		/**
-		 * 定时器，让进入按钮2秒后再显示出来
+		 * 定时器，让进入按钮6秒后再显示出来
 		 */
 		Timer timer = new Timer();
 		TimerTask task = new TimerTask() {
@@ -106,9 +131,27 @@ public class GuideActivity extends Activity implements OnClickListener {
 
 			}
 		};
-		timer.schedule(task, 2000);
+		timer.schedule(task, 6000);
 
 		enterAppBtn.setOnClickListener(this);
+
+	}
+
+	// 初始化操作，将缩略图加入缓存
+	private void loadBitmap() {
+
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				for (int i = 0; i < songList.size(); i++) {
+					Long album_id = songList.get(i).getAlbumId();
+					imageUtil.addBitmapToMemoryCache(album_id,
+							imageUtil.getSmallArtwork(album_id));
+				}
+
+			}
+		}).start();
 
 	}
 
@@ -118,11 +161,11 @@ public class GuideActivity extends Activity implements OnClickListener {
 	private void startAnimator() {
 		ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(enterAppBtn,
 				"alpha", 0f, 1f);
-		ObjectAnimator rotationAnimator = ObjectAnimator.ofFloat(enterAppBtn, 
+		ObjectAnimator rotationAnimator = ObjectAnimator.ofFloat(enterAppBtn,
 				"rotation", 0f, 360f);
 		AnimatorSet animatorSet = new AnimatorSet();
-		animatorSet.setDuration(3000);
-		animatorSet.play(rotationAnimator).after(alphaAnimator);
+		animatorSet.setDuration(4000);
+		animatorSet.play(rotationAnimator).with(alphaAnimator);
 		animatorSet.start();
 	}
 
@@ -133,7 +176,6 @@ public class GuideActivity extends Activity implements OnClickListener {
 			// 点击按钮，进入MainAty
 			enterMainAty();
 			break;
-
 		default:
 			break;
 		}
@@ -172,5 +214,11 @@ public class GuideActivity extends Activity implements OnClickListener {
 			videoView.suspend();
 		}
 		super.onDestroy();
+	}
+
+	@Override
+	public void onCompletion(MediaPlayer mediaPlayer) {
+		mediaPlayer.start();
+
 	}
 }

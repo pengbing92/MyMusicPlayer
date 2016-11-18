@@ -111,10 +111,7 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 
 	// 通知栏管理
 	private NotificationManager manager;
-
-	// 是否已启动Service
-	private boolean isServiceOpen = false;
-
+	
 	// 后退按钮
 	private ImageView back_Btn;
 
@@ -134,6 +131,8 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 	
 	// 右上角分享按钮
 	private ImageView shareBtn;
+	
+	private static final String TAG = LrcActivity.class.getName();
 
 	@SuppressLint("HandlerLeak")
 	private Handler handler = new Handler() {
@@ -198,8 +197,6 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 		isPlaying = getIntent().getBooleanExtra("isPlaying", false);
 		fromNotification = getIntent().getBooleanExtra("fromNotification",
 				false);
-
-		isServiceOpen = MusicManager.isServiceOpen();
 
 		// 初始化歌曲信息
 		songName = songServiceDao.getCurrentSong().getSongName();
@@ -515,12 +512,12 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 		intent.putExtra("secondPause", secondPause);
 		// 启动Service
 		startService(intent);
-		isServiceOpen = true;
+		MusicManager.setServiceOpen(true);
 
 	}
 
 	/**
-	 * 点击通知栏进入，LrcAty， 返回，进入SongAty，执行顺序是: Lrc_onPause -> Song_onCreate ->
+	 * 点击通知栏进入，LrcAty， 返回，进入MainAty，执行顺序是: Lrc_onPause -> Main_onCreate ->
 	 * Lrc_onStop -> Lrc_onDestory
 	 */
 	@Override
@@ -533,12 +530,6 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 		}
 
 		super.onPause();
-	}
-
-	@Override
-	protected void onStop() {
-		// Toast.makeText(context, "Main_onStop", Toast.LENGTH_SHORT).show();
-		super.onStop();
 	}
 
 	@Override
@@ -590,7 +581,8 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 		MusicManager.setSeekPosition(seekPosition);
 
 		// 发送广播，service更新播放位置
-		if (isServiceOpen) {
+		if (MusicManager.isServiceOpen()) {
+			Log.i(TAG, "isServiceOpen is true");
 			sendSeekPositionToService();
 		}
 
@@ -598,7 +590,7 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 
 	// 把拖动后的位置通过广播发送到Service
 	public void sendSeekPositionToService() {
-
+		Log.i(TAG, "把拖动后的位置通过广播发送到Service");
 		Intent seekIntent = new Intent();
 		seekIntent.setAction("seekBar");
 		seekIntent.putExtra("seekPosition", seekPosition);
