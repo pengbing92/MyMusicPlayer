@@ -13,3 +13,6 @@
 ###
 ###歌词显示区域可以滑动切换为专辑倒影
 ![image](https://github.com/pengbing92/MyMusicPlayer/raw/master/screenshots/专辑倒影.png)
+###
+###模糊查询
+![image](https://github.com/pengbing92/MyMusicPlayer/raw/master/screenshots/模糊查询.png)
