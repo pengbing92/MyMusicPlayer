@@ -164,7 +164,7 @@ public class GuideActivity extends Activity implements OnClickListener,
 		ObjectAnimator rotationAnimator = ObjectAnimator.ofFloat(enterAppBtn,
 				"rotation", 0f, 360f);
 		AnimatorSet animatorSet = new AnimatorSet();
-		animatorSet.setDuration(4000);
+		animatorSet.setDuration(3000);
 		animatorSet.play(rotationAnimator).with(alphaAnimator);
 		animatorSet.start();
 	}

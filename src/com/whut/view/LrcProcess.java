@@ -31,7 +31,7 @@ public class LrcProcess {
 	private String songName = ""; // 要检索歌词的歌曲名
 	private String singer = ""; // 要检索歌词的歌手
 	private boolean DOWNLOAD = false; // 下载是否完成
-	private static boolean NOT_FOUND = false; // 是否检索到歌词
+	private static boolean NOT_FOUND = true; // 是否检索到歌词
 
 	private String rootPath = Environment.getExternalStorageDirectory()
 			.getPath() + "/MyMusicPlayer/PengBing_lrcs";
@@ -58,7 +58,7 @@ public class LrcProcess {
 	}
 
 	/**
-	 * 读取歌词
+	 * 读歌词
 	 * 
 	 * @param song
 	 * @param singer
@@ -73,7 +73,6 @@ public class LrcProcess {
 
 		songName = nameArray[0].trim();
 
-		// File prcFile = new File(path.replace(".mp3", ".lrc"));
 		prcFile = new File(rootPath, songName + ".prc");
 		Log.i("lrc_path", prcFile.getPath());
 
@@ -251,7 +250,7 @@ public class LrcProcess {
 			// String url = "http://geci.me/api/lyric/" + songName;
 			try {
 				String url = "http://www.cnlyric.com/search.php?k="
-						+ URLEncoder.encode(songName + " " + singer, "gb2312")
+						+ URLEncoder.encode(singer + " " + songName, "gb2312")
 						+ "&t=s";
 
 				String response = myClient.doGet(url);
@@ -268,16 +267,6 @@ public class LrcProcess {
 						String downloadUrl = "http://www.cnlyric.com/LrcDown/"
 								+ numStr + ".lrc";
 
-//						Timer timer = new Timer();
-//						TimerTask task = new TimerTask() {
-//							
-//							@Override
-//							public void run() {
-//								
-//								
-//							}
-//						};
-//						timer.schedule(task, 15000);
 						DOWNLOAD = myClient.createPrcFile(rootPath, downloadUrl,
 								songName);
 
@@ -292,12 +281,14 @@ public class LrcProcess {
 							Log.i("search_lrc", "未检索到歌词...");
 						}
 					} else { // 15秒内只能下载一次
+						// 未完成下载，未检索到相关歌词
+						DOWNLOAD = false;
+						NOT_FOUND = true;
 						Log.i("错误信息", "未检索到歌词...");
 					}
 					
 				}
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 

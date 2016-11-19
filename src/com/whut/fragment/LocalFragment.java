@@ -99,9 +99,9 @@ public class LocalFragment extends Fragment implements OnClickListener {
 				break;
 			case 1:
 				if (isPlaying) {
-					playBtn.setBackgroundResource(R.drawable.paubtn_selector);
+					playBtn.setBackgroundResource(R.drawable.ic_action_playback_pause);
 				} else {
-					playBtn.setBackgroundResource(R.drawable.playbtn_selector);
+					playBtn.setBackgroundResource(R.drawable.ic_action_playback_play);
 				}
 			default:
 				break;
@@ -180,9 +180,9 @@ public class LocalFragment extends Fragment implements OnClickListener {
 		singer.setText(singer_str.split(",")[0].trim());
 		
 		if (isPlaying) { 
-			playBtn.setBackgroundResource(R.drawable.paubtn_selector);
+			playBtn.setBackgroundResource(R.drawable.ic_action_playback_pause);
 		} else {
-			playBtn.setBackgroundResource(R.drawable.playbtn_selector);
+			playBtn.setBackgroundResource(R.drawable.ic_action_playback_play);
 		}
 		
 	}
@@ -205,7 +205,7 @@ public class LocalFragment extends Fragment implements OnClickListener {
 		case R.id.next_btn:
 			playNextSong();
 			// 切换歌曲的时候，重新设置 NOT_FOUND 的初始值为false
-			LrcProcess.setNOT_FOUND(false);
+			LrcProcess.setNOT_FOUND(true);
 			break;
 		default:
 			break;
@@ -221,16 +221,16 @@ public class LocalFragment extends Fragment implements OnClickListener {
 			gotoService.putExtra("other_music", true);
 			// 重置
 			playNext = false;
-			playBtn.setBackgroundResource(R.drawable.paubtn_selector);
+			playBtn.setBackgroundResource(R.drawable.ic_action_playback_pause);
 		} else {
 			// 没有切换歌曲
 			if (isPlaying) {
 				msg = Msg_Music.PAUSE;
 				secondPause = -1;
-				playBtn.setBackgroundResource(R.drawable.playbtn_selector);
+				playBtn.setBackgroundResource(R.drawable.ic_action_playback_play);
 			} else {
 				msg = Msg_Music.PLAY;
-				playBtn.setBackgroundResource(R.drawable.paubtn_selector);
+				playBtn.setBackgroundResource(R.drawable.ic_action_playback_pause);
 			}
 			gotoService.putExtra("other_music", false);
 		}

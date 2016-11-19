@@ -7,6 +7,9 @@
     <com.whut.view.LrcView
         android:id="@+id/lrcShowView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:textColor="@color/red"
+        android:maxLines="2" />
 
 </LinearLayout>

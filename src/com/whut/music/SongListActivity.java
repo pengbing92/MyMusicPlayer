@@ -231,9 +231,9 @@ public class SongListActivity extends Activity implements OnClickListener,
 		super.onResume();
 
 		if (isPlaying) {
-			playBtn.setBackgroundResource(R.drawable.paubtn_selector);
+			playBtn.setBackgroundResource(R.drawable.ic_action_playback_pause);
 		} else {
-			playBtn.setBackgroundResource(R.drawable.playbtn_selector);
+			playBtn.setBackgroundResource(R.drawable.ic_action_playback_play);
 		}
 		// 若LrcAty中切换了歌曲，更新UI
 		handler.sendEmptyMessage(1);
@@ -317,9 +317,9 @@ public class SongListActivity extends Activity implements OnClickListener,
 		songImage.setBackgroundResource(R.drawable.app_music);
 
 		if (isPlaying) {
-			playBtn.setBackgroundResource(R.drawable.paubtn_selector);
+			playBtn.setBackgroundResource(R.drawable.ic_action_playback_pause);
 		} else {
-			playBtn.setBackgroundResource(R.drawable.playbtn_selector);
+			playBtn.setBackgroundResource(R.drawable.ic_action_playback_play);
 		}
 
 		songName.setText(songName_str.split("\\(")[0].trim());
@@ -393,7 +393,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 		case R.id.next_btn:
 			playNextSong();
 			// 切换歌曲的时候，重新设置 NOT_FOUND 的初始值为false
-			LrcProcess.setNOT_FOUND(false);
+			LrcProcess.setNOT_FOUND(true);
 			break;
 		case R.id.back:
 			// 结束当前Aty，返回上一个Aty
@@ -410,15 +410,15 @@ public class SongListActivity extends Activity implements OnClickListener,
 			gotoService.putExtra("other_music", true);
 			// 重置
 			playNext = false;
-			playBtn.setBackgroundResource(R.drawable.paubtn_selector);
+			playBtn.setBackgroundResource(R.drawable.ic_action_playback_pause);
 		} else { // 没有切换歌曲
 			if (isPlaying) {
 				msg = Msg_Music.PAUSE;
 				secondPause = -1;
-				playBtn.setBackgroundResource(R.drawable.playbtn_selector);
+				playBtn.setBackgroundResource(R.drawable.ic_action_playback_play);
 			} else {
 				msg = Msg_Music.PLAY;
-				playBtn.setBackgroundResource(R.drawable.paubtn_selector);
+				playBtn.setBackgroundResource(R.drawable.ic_action_playback_pause);
 			}
 			gotoService.putExtra("other_music", false);
 		}
@@ -494,7 +494,7 @@ public class SongListActivity extends Activity implements OnClickListener,
 			handler.sendEmptyMessage(1);
 
 			// 切换歌曲的时候，重新设置 NOT_FOUND 的初始值为false
-			LrcProcess.setNOT_FOUND(false);
+			LrcProcess.setNOT_FOUND(true);
 		}
 
 		startMusicService();

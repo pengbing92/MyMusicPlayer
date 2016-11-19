@@ -45,7 +45,7 @@ public class LrcFragment extends Fragment {
 			switch (msg.what) {
 			case 0:
 				// 重新加载歌词
-				initLrc();
+				initLrcOfSong();
 				break;
 
 			default:
@@ -80,8 +80,9 @@ public class LrcFragment extends Fragment {
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 		lrcView = (LrcView) getActivity().findViewById(R.id.lrcShowView);
+
 		// 加载歌词
-		initLrc();
+		initLrcOfSong();
 	}
 
 	// 注册广播接收器
@@ -100,26 +101,31 @@ public class LrcFragment extends Fragment {
 		lastSong = currentSong;
 	}
 
-	public void initLrc() {
-
+	public void initLrcOfSong() {
+		
+		mLrcProcess = new LrcProcess();
+		mLrcProcess.readLRC(currentSong.getSongName().trim(), currentSong
+				.getSinger().trim());
+		lrcList = mLrcProcess.getLrcList();
+	
 		if (firstShow) {
-			mLrcProcess = new LrcProcess();
-			mLrcProcess.readLRC(currentSong.getSongName().trim(), currentSong.getSinger().trim());
-			lrcList = mLrcProcess.getLrcList();
-			lrcView.setmLrcList(lrcList);
-			handler.post(mRunnable);
+			showLrc();
 		} else {
 			if (lastSong.getId() != currentSong.getId()) {
-				mLrcProcess = new LrcProcess();
-				mLrcProcess.readLRC(currentSong.getSongName().trim(), currentSong.getSinger().trim());
-				lrcList = mLrcProcess.getLrcList();
-				lrcView.setmLrcList(lrcList);
-				handler.post(mRunnable);
+				showLrc();
 				lastSong = currentSong;
 			}
 		}
 
 		firstShow = false;
+
+	}
+
+	private void showLrc() {
+		
+		lrcView.setText("歌词加载中..");
+		lrcView.setmLrcList(lrcList);
+		handler.post(mRunnable);
 
 	}
 

@@ -147,7 +147,7 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 				songName = songServiceDao.getCurrentSong().getSongName();
 				singer = songServiceDao.getCurrentSong().getSinger();
 				duration = songServiceDao.getCurrentSong().getDuration();
-				song_name.setText(songName);
+				song_name.setText(songName.split("\\(")[0]);
 				song_singer.setText(singer);
 				endTime.setText(getSongTime(duration));
 				break;
@@ -264,7 +264,7 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 		viewPager.setCurrentItem(0);
 
 		// 歌曲名和歌手
-		song_name.setText(songName);
+		song_name.setText(songName.split("\\(")[0]);
 		song_singer.setText(singer);
 
 		// 设置歌曲时长
@@ -430,7 +430,7 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 		case R.id.previous:
 			playPreSong();
 			// 切换歌曲的时候，重新设置 NOT_FOUND 的初始值为false
-			LrcProcess.setNOT_FOUND(false);
+			LrcProcess.setNOT_FOUND(true);
 			break;
 		case R.id.pause:
 			startMusicService();
@@ -438,7 +438,7 @@ public class LrcActivity extends FragmentActivity implements OnClickListener,
 		case R.id.next:
 			playNextSong();
 			// 切换歌曲的时候，重新设置 NOT_FOUND 的初始值为false
-			LrcProcess.setNOT_FOUND(false);
+			LrcProcess.setNOT_FOUND(true);
 			break;
 		case R.id.play_model:
 			switchModel();
