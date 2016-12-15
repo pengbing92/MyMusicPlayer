@@ -143,6 +143,12 @@ public class MainActivity extends FragmentActivity implements OnClickListener,
 		Log.i(TAG, "onDestory");
 		super.onDestroy();
 	}
+	
+	@Override
+	protected void onRestart() {
+		super.onRestart();
+		Log.i(TAG, "onRestart");
+	}
 
 	
 

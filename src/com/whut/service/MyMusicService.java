@@ -168,8 +168,10 @@ public class MyMusicService extends Service {
 
 		// 先reset，再重新加载其他曲目
 		if (other_music) {
+			// 点击歌曲列表中与当前播放歌曲不同的歌
 			stopThread = true;
 			mediaPlayer.reset();
+			sendSwitchSongBroadcast();
 		}
 
 		mp3Path = songServiceDao.getCurrentSong().getMp3Path();

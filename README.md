@@ -8,7 +8,7 @@
 ###在网络上检索歌词
 ![image](https://github.com/pengbing92/MyMusicPlayer/raw/master/screenshots/检索歌词.png)
 ###
-###下载七友歌词，并展示
+###下载分手总要在雨天歌词，并展示
 ![image](https://github.com/pengbing92/MyMusicPlayer/raw/master/screenshots/分手总要在雨天.png)
 ###
 ###歌词显示区域可以滑动切换为专辑倒影
